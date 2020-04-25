@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<html xmlns='http://www.w3.org/1999/xhtml'>
+	<head>
+		<script type='text/javascript'>
+			console.info('script');
+			(function () {
+				if (document.readyState !== "loading") return this.call(document);
+				else return document.addEventListener("DOMContentLoaded", this);
+			}).call(
+				function () {
+					var input = document.getElementById('input');
+					var output = document.getElementById('output');
+					document.getElementById('clear').addEventListener(
+						'click',
+						function (event) {
+							input.value = '';
+							output.setAttribute('href', '');
+							output.textContent = '';
+						}
+					);
+					document.getElementsByTagName('form').item(0).addEventListener(
+						'submit',
+						function (event) {
+							event.preventDefault();
+							var l = decodeURIComponent(input.value);
+							l = l.replace(/https:\/\/l\.facebook\.com\/l\.php\?u=/, '');
+							output.setAttribute('href', l);
+							output.textContent = l;
+						}
+					);
+				}
+			);
+		</script>
+	</head>
+	<body>
+		<form>
+			<div style='display: flex'>
+				<input id='input' style='flex-grow: 1'/>
+				<input id='clear' type='button' value='Clear'/>
+				<input type='submit' value='Decode'/>
+			</div>
+			<a id='output'/>
+		</form>
+	</body>
+</html>
