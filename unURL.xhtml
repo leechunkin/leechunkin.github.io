@@ -32,14 +32,25 @@
 							);
 						}
 						var forms = document.getElementsByTagName('form');
-						decode(forms.item(0), /^https:\/\/www\.youtube\.com\/redirect\?(?:[^&]|&[^q]|&q[^=])*&q=|&.*$/g);
-						decode(forms.item(1), /^https:\/\/l\.facebook\.com\/l\.php\?u=/);
+						decode(forms.item(0), /^https:\/\/[^\/]*\/url\?(?:[^&]|&[^u]|&u[^r]|&ur[^l]|&url[^=])*&url=|&.*$/g);
+						decode(forms.item(1), /^https:\/\/www\.youtube\.com\/redirect\?(?:[^&]|&[^q]|&q[^=])*&q=|&.*$/g);
+						decode(forms.item(2), /^https:\/\/l\.facebook\.com\/l\.php\?u=/);
 					}
 				);
 			]]>
 		</script>
 	</head>
 	<body>
+		<form>
+			<div style='display: flex; align-items: center'>
+				Google
+				<input type='submit' value='Decode'/>
+				<input type='button' value='Clear'/>
+				<input type='text' placeholder='Google' style='flex-grow: 1'/>
+			</div>
+			<a/>
+		</form>
+		<hr/>
 		<form>
 			<div style='display: flex; align-items: center'>
 				YouTube
