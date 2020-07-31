@@ -1,0 +1,63 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<html xmlns='http://www.w3.org/1999/xhtml'>
+	<title>decode URL</title>
+	<head>
+		<script type='text/javascript'>
+			<![CDATA[
+				(function () {
+					if (document.readyState !== "loading") return this.call(document);
+					else return document.addEventListener("DOMContentLoaded", this);
+				}).call(
+					function () {
+						'use strict';
+						function decode(form, RE) {
+							var input = form.querySelector('input[type="text"]');
+							var output = form.querySelector('a');
+							form.querySelector('input[type="button"]').addEventListener(
+								'click',
+								function (event) {
+									input.value = '';
+									output.setAttribute('href', '');
+									output.textContent = '';
+								}
+							);
+							form.addEventListener(
+								'submit',
+								function (event) {
+									event.preventDefault();
+									var l = decodeURIComponent(input.value.replace(RE, ''));
+									output.setAttribute('href', l);
+									output.textContent = l;
+								}
+							);
+						}
+						var forms = document.getElementsByTagName('form');
+						decode(forms.item(0), /^https:\/\/www\.youtube\.com\/redirect\?(?:[^&]|&[^q]|&q[^=])*&q=|&.*$/g);
+						decode(forms.item(1), /^https:\/\/l\.facebook\.com\/l\.php\?u=/);
+					}
+				);
+			]]>
+		</script>
+	</head>
+	<body>
+		<form>
+			<div style='display: flex; align-items: center'>
+				YouTube
+				<input type='submit' value='Decode'/>
+				<input type='button' value='Clear'/>
+				<input type='text' placeholder='YouTube' style='flex-grow: 1'/>
+			</div>
+			<a/>
+		</form>
+		<hr/>
+		<form>
+			<div style='display: flex; align-items: center'>
+				Facebook
+				<input type='submit' value='Decode'/>
+				<input type='button' value='Clear'/>
+				<input type='text' placeholder='Facebook' style='flex-grow: 1'/>
+			</div>
+			<a/>
+		</form>
+	</body>
+</html>
