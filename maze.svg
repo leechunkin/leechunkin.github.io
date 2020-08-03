@@ -1,0 +1,15 @@
+<svg
+	xmlns='http://www.w3.org/2000/svg' viewBox='-1 -0.66666666666666666 2 1.3333333333333333'
+	xmlns:xlink='http://www.w3.org/1999/xlink'
+>
+<title>Maze</title>
+<style>
+polygon {
+	stroke: black;
+	stroke-width: 0.005;
+}
+</style>
+<script type='text/ecmascript' xlink:href='maze.js'/>
+<rect x='-1' y='-0.66666666666666666' width='2' height='1.3333333333333333' fill='#7F7F7F'/>
+<text x='-0.8' y='0' font-size='0.15'>Javascript is required.</text>
+</svg>
