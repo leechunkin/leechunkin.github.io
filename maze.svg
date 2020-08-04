@@ -4,9 +4,12 @@
 >
 <title>Maze</title>
 <style>
-polygon {
+svg:root {
+	background: black;
+}
+svg:root > polygon {
 	stroke: black;
-	stroke-width: 0.005;
+	stroke-width: 0.003125;
 }
 </style>
 <script type='text/ecmascript' xlink:href='maze.js'/>
