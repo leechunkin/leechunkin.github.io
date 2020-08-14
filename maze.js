@@ -3,6 +3,7 @@
 
 /*** Constants ***/
 
+var MAZE_SIZE = 21;
 var DECAY_RATE = 0.75;
 var RANGE = 7;
 var VIEW_DISTANCE = 0.75;
@@ -11,26 +12,40 @@ var FLOOR_HEIGHT = -0.6;
 var FLOOR_BRIGHTNESS = 0.5;
 var CEILING_BRIGHTNESS = 2;
 var WALL_BORDER_COLOUR = '#000000';
-var WALL_BORDER_WIDTH = '0.003';
+var WALL_BORDER_WIDTH = '0.005';
+
+/*** Utilities ***/
+
+function plus_2(a, b) {
+	return [a[0]+b[0], a[1]+b[1]];
+}
+
+function minus_2(a, b) {
+	return [a[0]-b[0], a[1]-b[1]];
+}
+
+function norm_2(v) {
+	//	return Math.abs(v[0]) + Math.abs(v[1]);
+	return Math.sqrt(v[0]*v[0] + v[1]*v[1]);
+}
 
 /*** Screen Dimensions ***/
 
 var ASPECT_RATIO = 4 / 3;
-
-var width, height;
-var width2, height2;
+var screen = new Object;
+screen.half = new Object;
 
 function update_dimensions() {
 	var w = window.innerWidth;
 	var h = window.innerHeight;
 	var ah = Math.round(w / ASPECT_RATIO);
 	var aw = Math.round(h * ASPECT_RATIO);
-	width = Math.min(w, aw);
-	height = Math.min(h, ah);
-	width2 = Math.floor(width / 2);
-	height2 = Math.floor(height / 2);
-	document.documentElement.setAttribute('width', width);
-	document.documentElement.setAttribute('height', height);
+	screen.width = Math.min(w, aw);
+	screen.height = Math.min(h, ah);
+	screen.half.width = Math.floor(screen.width / 2);
+	screen.half.height = Math.floor(screen.height / 2);
+	document.documentElement.setAttribute('width', screen.width);
+	document.documentElement.setAttribute('height', screen.height);
 }
 
 update_dimensions();
@@ -59,40 +74,123 @@ function Tile(t, c) {
 Tile.WALL = 0;
 Tile.EMPTY = 1;
 Tile.EXIT = 2;
+Tile.CONSTRUCTION = 9;
 
 Tile.prototype.is_wall = function is_wall() {
 	return Object.is(this.type, Tile.WALL);
 };
 
-function map(position) {
+function Maze() {
 	function X(c) {return new Tile(Tile.WALL, COLOURS[c]);}
 	function O(c) {return new Tile(Tile.EMPTY, COLOURS[c]);}
 	function S(c) {return new Tile(Tile.EXIT, COLOURS[c]);}
-	return (
-		[
-			[X(0), X(1), X(2), X(0), X(1), X(2), X(0), X(1), X(2)],
-			[X(3), O(4), O(5), O(3), O(4), O(5), O(3), O(4), X(5)],
-			[X(6), O(7), X(8), X(6), O(7), X(8), X(6), O(7), X(8)],
-			[X(0), O(1), O(2), O(0), O(1), O(2), O(0), O(1), X(2)],
-			[X(3), O(4), X(5), X(3), X(4), X(5), X(3), O(4), X(5)],
-			[X(6), O(7), O(8), O(6), O(7), X(8), S(6), O(7), X(8)],
-			[X(0), O(1), O(2), X(0), O(1), X(2), O(0), O(1), X(2)],
-			[X(3), O(4), O(5), X(3), O(4), O(5), O(3), X(4), X(5)],
-			[X(6), X(7), X(8), X(6), X(7), X(8), X(6), X(7), X(8)]
-		][position[1]][position[0]]
-	);
+	this.start = [2, 2];
+	this.tiles = [
+		[X(0), X(1), X(2), X(0), X(1), X(2)],
+		[X(3), O(4), O(5), O(3), O(4), X(5)],
+		[X(6), O(7), O(8), O(6), O(7), X(8)],
+		[X(0), O(1), O(2), S(0), O(1), X(2)],
+		[X(3), O(4), O(5), O(3), O(4), X(5)],
+		[X(6), X(7), X(8), X(6), X(7), X(8)]
+	];
+	return this;
 }
+
+Maze.prototype.tile = function tile(position) {
+	return this.tiles[position[1]][position[0]];
+}
+
+Maze.NEIGHBOURS = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+Maze.THROUGH_RATE = 0.25;
+
+Maze.prototype.generate = function generate(size) {
+	var m, s, e, ee;
+
+	function allocate() {
+		m = new Array(size);
+		for (var i=0; i<size; ++i) {
+			m[i] = new Array(size);
+			for (var j=0; j<size; ++j) {
+				m[i][j] = Tile.WALL;
+			}
+		}
+		s = new Array;
+	}
+
+	function step() {
+		function available(from, to) {
+			if (to[0] <= 0 || to[0] >= size-1) return false;
+			if (to[1] <= 0 || to[1] >= size-1) return false;
+			if (m[to[0]][to[1]] !== Tile.WALL) return false;
+			return Maze.NEIGHBOURS.every(
+				function (neighbour) {
+					var x = to[0] + neighbour[0];
+					var y = to[1] + neighbour[1];
+					return (
+						(x === from[0] && y === from[1]) ||
+						(m[x][y] === Tile.WALL) ||
+						(m[x][y] === Tile.CONSTRUCTION && Math.random() < Maze.THROUGH_RATE)
+					);
+				}
+			);
+		}
+		var o = Math.random() < 0.5 ? 0 : s.length-1;
+		var p = s[o];
+		var a =
+			Maze.NEIGHBOURS
+				.map(function (n) {return plus_2(p, n);})
+				.filter(function (n) {return available(p, n);});
+		if (a.length <= 1) {
+			m[p[0]][p[1]] = Tile.EMPTY;
+			s.splice(o, 1);
+			var pp = norm_2(minus_2(p, this.start));
+			if (Math.random() * (pp + ee) < pp) {
+				e = p;
+				ee = pp;
+			}
+		}
+		if (a.length > 0) {
+			var t = a[Math.floor(Math.random() * a.length)];
+			s.push(t);
+			m[t[0]][t[1]] = Tile.CONSTRUCTION;
+		}
+	}
+
+	function build() {
+		this.tiles = new Array(size);
+		for (var i=0; i<size; ++i) {
+			this.tiles[i] = new Array(size);
+			for (var j=0; j<size; ++j) {
+				this.tiles[i][j] = new Tile(m[j][i], COLOURS[i%3*3+j%3]);
+			}
+		}
+	}
+
+	this.start = [Math.floor(size*0.5), Math.floor(size*0.5)];
+	e = this.start;
+	ee = 0;
+	allocate();
+	s.push(this.start);
+	m[this.start[0]][this.start[1]] = Tile.CONSTRUCTION;
+	while (s.length > 0) step.call(this);
+	m[e[0]][e[1]] = Tile.EXIT;
+	//	console.log(m.map(n => n.map(e => ['X','.','O','?'][e]).join('')).join('\n'));
+	build.call(this);
+}
+
+var maze = new Maze;
+maze.generate(MAZE_SIZE);
 
 /*** Player ***/
 
 function Player() {
-	this.position = [1, 1];
+	this.position = maze.start;
 	this.facing = 1;
 	return this;
 }
 
 Player.prototype.tile = function () {
-	return map(this.position);
+	return maze.tile(this.position);
 };
 
 Player.prototype.relative_position = function relative_position(pos) {
@@ -105,12 +203,12 @@ Player.prototype.relative_position = function relative_position(pos) {
 }
 
 Player.prototype.relative_tile = function relative_tile(pos) {
-	return map(this.relative_position(pos));
+	return maze.tile(this.relative_position(pos));
 };
 
 Player.prototype.step = function step(pos) {
 	var p = this.relative_position(pos);
-	if (map(p).is_wall()) {
+	if (maze.tile(p).is_wall()) {
 		return false;
 	} else {
 		this.position = p;
@@ -290,7 +388,6 @@ Drawer.prototype.draw_left = function draw_left(pos) {
 	var tile = this.player.relative_tile(pos);
 	if (tile.is_wall()) {
 		var polygon = document.createElementNS(SVG, 'polygon');
-		var points =
 		polygon.setAttribute(
 			'points',
 			this.vertices_points(
@@ -324,7 +421,6 @@ Drawer.prototype.draw_right = function draw_right(pos) {
 	var tile = this.player.relative_tile(pos);
 	if (tile.is_wall()) {
 		var polygon = document.createElementNS(SVG, 'polygon');
-		var points =
 		polygon.setAttribute(
 			'points',
 			this.vertices_points(
