@@ -14,21 +14,6 @@ var CEILING_BRIGHTNESS = 2;
 var WALL_BORDER_COLOUR = '#000000';
 var WALL_BORDER_WIDTH = '0.005';
 
-/*** Utilities ***/
-
-function plus_2(a, b) {
-	return [a[0]+b[0], a[1]+b[1]];
-}
-
-function minus_2(a, b) {
-	return [a[0]-b[0], a[1]-b[1]];
-}
-
-function norm_2(v) {
-	//	return Math.abs(v[0]) + Math.abs(v[1]);
-	return Math.sqrt(v[0]*v[0] + v[1]*v[1]);
-}
-
 /*** Screen Dimensions ***/
 
 var ASPECT_RATIO = 4 / 3;
@@ -138,12 +123,15 @@ Maze.prototype.generate = function generate(size) {
 		var p = s[o];
 		var a =
 			Maze.NEIGHBOURS
-				.map(function (n) {return plus_2(p, n);})
+				.map(function (n) {return [p[0]+n[0], p[1]+n[1]];})
 				.filter(function (n) {return available(p, n);});
 		if (a.length <= 1) {
 			m[p[0]][p[1]] = Tile.EMPTY;
 			s.splice(o, 1);
-			var pp = norm_2(minus_2(p, this.start));
+			var x = p[0] - this.start[0];
+			var y = p[1] - this.start[1];
+			//	var pp = Math.abs(x) + Math.abs(y);
+			var pp = Math.sqrt(x*x + y*y);
 			if (Math.random() * (pp + ee) < pp) {
 				e = p;
 				ee = pp;
