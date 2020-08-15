@@ -3,8 +3,7 @@
 
 /*** Constants ***/
 
-var MAZE_SIZE = 21;
-var DECAY_RATE = 0.75;
+var DECAY_RATE = 0.625;
 var RANGE = 7;
 var VIEW_DISTANCE = 0.75;
 var CEILING_HEIGHT = 0.4;
@@ -39,15 +38,9 @@ window.addEventListener('resize', update_dimensions);
 /*** Map ***/
 
 var COLOURS = [
-	[0xBF, 0x00, 0x00],
-	[0x7F, 0x3F, 0x00],
-	[0x3F, 0x7F, 0x00],
-	[0x00, 0xBF, 0x00],
-	[0x00, 0x7F, 0x3F],
-	[0x00, 0x3F, 0x7F],
-	[0x00, 0x00, 0xBF],
-	[0x3F, 0x00, 0x7F],
-	[0x7F, 0x00, 0x3F]
+	[0xBF, 0x00, 0x00], [0x7F, 0x3F, 0x00], [0x3F, 0x7F, 0x00],
+	[0x00, 0xBF, 0x00], [0x00, 0x7F, 0x3F], [0x00, 0x3F, 0x7F],
+	[0x00, 0x00, 0xBF], [0x3F, 0x00, 0x7F], [0x7F, 0x00, 0x3F]
 ];
 
 function Tile(t, c) {
@@ -69,14 +62,14 @@ function Maze() {
 	function X(c) {return new Tile(Tile.WALL, COLOURS[c]);}
 	function O(c) {return new Tile(Tile.EMPTY, COLOURS[c]);}
 	function S(c) {return new Tile(Tile.EXIT, COLOURS[c]);}
+	this.size = 5;
 	this.start = [2, 2];
 	this.tiles = [
-		[X(0), X(1), X(2), X(0), X(1), X(2)],
-		[X(3), O(4), O(5), O(3), O(4), X(5)],
-		[X(6), O(7), O(8), O(6), O(7), X(8)],
-		[X(0), O(1), O(2), S(0), O(1), X(2)],
-		[X(3), O(4), O(5), O(3), O(4), X(5)],
-		[X(6), X(7), X(8), X(6), X(7), X(8)]
+		[X(0), X(1), X(2), X(0), X(1)],
+		[X(3), O(4), O(5), O(3), X(4)],
+		[X(6), O(7), O(8), S(6), X(7)],
+		[X(0), O(1), O(2), O(0), X(1)],
+		[X(3), X(4), X(5), X(3), X(4)]
 	];
 	return this;
 }
@@ -102,7 +95,7 @@ Maze.prototype.generate = function generate(size) {
 		s = new Array;
 	}
 
-	function step() {
+	function grow() {
 		function available(from, to) {
 			if (to[0] <= 0 || to[0] >= size-1) return false;
 			if (to[1] <= 0 || to[1] >= size-1) return false;
@@ -111,11 +104,10 @@ Maze.prototype.generate = function generate(size) {
 				function (neighbour) {
 					var x = to[0] + neighbour[0];
 					var y = to[1] + neighbour[1];
-					return (
-						(x === from[0] && y === from[1]) ||
-						(m[x][y] === Tile.WALL) ||
-						(m[x][y] === Tile.CONSTRUCTION && Math.random() < Maze.THROUGH_RATE)
-					);
+					return x === from[0] && y === from[1]
+						|| Object.is(m[x][y], Tile.WALL)
+						|| Object.is(m[x][y], Tile.CONSTRUCTION)
+							&& Math.random() < Maze.THROUGH_RATE;
 				}
 			);
 		}
@@ -154,31 +146,33 @@ Maze.prototype.generate = function generate(size) {
 		}
 	}
 
+	this.size = size;
 	this.start = [Math.floor(size*0.5), Math.floor(size*0.5)];
 	e = this.start;
 	ee = 0;
 	allocate();
 	s.push(this.start);
 	m[this.start[0]][this.start[1]] = Tile.CONSTRUCTION;
-	while (s.length > 0) step.call(this);
+	while (s.length > 0) grow.call(this);
 	m[e[0]][e[1]] = Tile.EXIT;
-	//	console.log(m.map(n => n.map(e => ['X','.','O','?'][e]).join('')).join('\n'));
-	build.call(this);
+	//	console.log(
+	//		'%s',
+	//		m.map(n => n.map(e => ['X','.','O','?'][e]).join('')).join('\n')
+	//	);
+	return build.call(this);
 }
-
-var maze = new Maze;
-maze.generate(MAZE_SIZE);
 
 /*** Player ***/
 
-function Player() {
+function Player(maze) {
+	this.maze = maze;
 	this.position = maze.start;
 	this.facing = 1;
 	return this;
 }
 
 Player.prototype.tile = function () {
-	return maze.tile(this.position);
+	return this.maze.tile(this.position);
 };
 
 Player.prototype.relative_position = function relative_position(pos) {
@@ -191,13 +185,17 @@ Player.prototype.relative_position = function relative_position(pos) {
 }
 
 Player.prototype.relative_tile = function relative_tile(pos) {
-	return maze.tile(this.relative_position(pos));
+	return this.maze.tile(this.relative_position(pos));
 };
 
 Player.prototype.step = function step(pos) {
 	var p = this.relative_position(pos);
-	if (maze.tile(p).is_wall()) {
+	if (this.maze.tile(p).is_wall()) {
 		return false;
+	} else if (Object.is(this.maze.tile(p).type, Tile.EXIT)) {
+		this.maze.generate(this.maze.size + 2);
+		this.position = this.maze.start;
+		return true;
 	} else {
 		this.position = p;
 		return true;
@@ -256,15 +254,20 @@ Drawer.prototype.brighten = function brighten(c, r) {
 };
 
 Drawer.prototype.colour_code = function colour_code(c) {
-	return '#' + c.map(function (n) {return n.toString(16).padStart(2, '0');}).join('');
+	return '#'
+		+ c
+			.map(function (n) {return n.toString(16).padStart(2, '0');})
+			.join('');
 };
 
 Drawer.prototype.vertices_points = function vertices_points(v) {
-	return (
-		v
-			.map(function (v) {return [(v[0]/v[1]).toString(), (-v[2]/v[1]).toString()].join()})
-			.join(' ')
-	);
+	return v
+		.map(
+			function (v) {
+				return (v[0]/v[1]).toString() + ',' + (-v[2]/v[1]).toString();
+			}
+		)
+		.join(' ');
 };
 
 Drawer.prototype.add_element = function add_element(pos, element) {
@@ -285,7 +288,7 @@ Drawer.prototype.draw_plane = function draw_plane(pos, height, colour) {
 		)
 	);
 	polygon.setAttribute('fill', this.colour_code(colour));
-	this.add_element(pos, polygon);
+	return this.add_element(pos, polygon);
 };
 
 Drawer.prototype.decay = function decay(pos) {
@@ -294,17 +297,21 @@ Drawer.prototype.decay = function decay(pos) {
 
 Drawer.prototype.draw_tile = function draw_tile(tile, pos) {
 	var d = this.decay(pos);
-	this.draw_plane(pos, FLOOR_HEIGHT, this.brighten(tile.colour, FLOOR_BRIGHTNESS*d));
+	this.draw_plane(
+		pos,
+		FLOOR_HEIGHT,
+		this.brighten(tile.colour, FLOOR_BRIGHTNESS*d)
+	);
 	if (Object.is(tile.type, Tile.EXIT)) {
 		var text = document.createElementNS(SVG, 'text');
 		var y = pos[1] + VIEW_DISTANCE;
 		var ry = 1 / y;
-		text.setAttribute('font-size', 0.4*ry);
 		text.setAttribute('x', (pos[0]-0.5)*ry);
 		text.setAttribute('y', 0.1*ry);
+		text.setAttribute('font-size', 0.4*ry);
 		text.setAttribute('fill', '#FFFFFF');
 		text.setAttribute('stroke', '#3F3F3F');
-		text.setAttribute('stroke-width', (0.01*ry).toString());
+		text.setAttribute('stroke-width', 0.01*ry);
 		text.appendChild(document.createTextNode('EXIT'));
 		this.add_element(pos, text);
 		var polygon = document.createElementNS(SVG, 'polygon');
@@ -322,7 +329,11 @@ Drawer.prototype.draw_tile = function draw_tile(tile, pos) {
 		polygon.setAttribute('fill', this.colour_code([0xBF, 0xBF, 0xBF]));
 		this.add_element(pos, polygon);
 	}
-	this.draw_plane(pos, CEILING_HEIGHT, this.brighten(tile.colour, CEILING_BRIGHTNESS*d));
+	return this.draw_plane(
+		pos,
+		CEILING_HEIGHT,
+		this.brighten(tile.colour, CEILING_BRIGHTNESS*d)
+	);
 };
 
 Drawer.prototype.trace_repeated = function trace_repeated(pos) {
@@ -435,48 +446,88 @@ Drawer.prototype.draw_right = function draw_right(pos) {
 	}
 };
 
-Drawer.prototype.output = function output() {
-	return (
-		this.elements
-			.sort(function (a, b) {return b[0]-a[0];})
-			.forEach(function (e) {return document.documentElement.appendChild(e[1]);})
+Drawer.prototype.draw_info = function draw_info() {
+	var text = document.createElementNS(SVG, 'text');
+	text.setAttribute('x', -0.95);
+	text.setAttribute('y', 0.7);
+	text.setAttribute('font-size', 0.1);
+	text.setAttribute('font-weight', 'bold');
+	text.setAttribute('fill', '#FFDF7F');
+	text.setAttribute('stroke', '#00003F');
+	text.setAttribute('stroke-width', 0.0025);
+	text.appendChild(
+		document.createTextNode(
+			'SIZE: ' + (this.player.maze.size - 2).toString()
+		)
 	);
+	return document.documentElement.appendChild(text);
+};
+
+Drawer.prototype.output = function output() {
+	return this.elements
+		.sort(function (a, b) {return b[0] - a[0];})
+		.forEach(function (e) {document.documentElement.appendChild(e[1]);});
 };
 
 Drawer.prototype.draw_maze = function draw_maze() {
 	clear_screen();
 	this.draw_front([0, 0]);
 	this.output();
+	this.draw_info();
 	return this.reset();
 };
 
 /*** Main Program ***/
 
 function run() {
-	var player = new Player;
+	var maze = new Maze;
+	var player = new Player(maze);
 	var drawer = new Drawer(player);
 
 	drawer.draw_maze();
 
-	var keydown =
-		document.addEventListener(
-			'keydown',
-			function keydown(event) {
-				if (event.key === 'ArrowUp') {
-					if (player.step_forward())
-						drawer.draw_maze();
-				} else if (event.key === 'ArrowDown') {
-					if (player.step_backward())
-						drawer.draw_maze();
-				} else if (event.key === 'ArrowLeft') {
-					player.turn_left()
-					drawer.draw_maze();
-				} else if (event.key === 'ArrowRight') {
-					player.turn_right()
-					drawer.draw_maze();
-				} else return;
+	document.addEventListener(
+		'keydown',
+		function keydown(event) {
+			if (event.key === 'ArrowUp') {
+				if (player.step_forward())
+					return drawer.draw_maze();
+			} else if (event.key === 'ArrowDown') {
+				if (player.step_backward())
+					return drawer.draw_maze();
+			} else if (event.key === 'ArrowLeft') {
+				player.turn_left()
+				return drawer.draw_maze();
+			} else if (event.key === 'ArrowRight') {
+				player.turn_right()
+				return drawer.draw_maze();
 			}
-		);
+		}
+	);
+	document.addEventListener(
+		'mousedown',
+		function mousedown(event) {
+			var bl_ur = event.clientX/event.clientY < ASPECT_RATIO;
+			var ul_br = event.clientX/(screen.height-event.clientY) < ASPECT_RATIO;
+			if (bl_ur) {
+				if (ul_br) {
+					player.turn_left()
+					return drawer.draw_maze();
+				} else {
+					if (player.step_backward())
+						return drawer.draw_maze();
+				}
+			} else {
+				if (ul_br) {
+					if (player.step_forward())
+						return drawer.draw_maze();
+				} else {
+					player.turn_right()
+					return drawer.draw_maze();
+				}
+			}
+		}
+	);
 }
 
 run();
