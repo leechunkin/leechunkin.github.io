@@ -3,8 +3,8 @@
 
 /*** Constants ***/
 
-var DECAY_RATE = 0.625;
-var RANGE = 7;
+var DECAY_RATE = 0.75;
+var RANGE = 9;
 var VIEW_DISTANCE = 0.75;
 var CEILING_HEIGHT = 0.4;
 var FLOOR_HEIGHT = -0.6;
@@ -18,6 +18,7 @@ var WALL_BORDER_WIDTH = '0.005';
 var ASPECT_RATIO = 4 / 3;
 var screen = new Object;
 screen.half = new Object;
+var body = document.getElementsByTagName('svg').item(1);
 
 function update_dimensions() {
 	var w = window.innerWidth;
@@ -28,8 +29,10 @@ function update_dimensions() {
 	screen.height = Math.min(h, ah);
 	screen.half.width = Math.floor(screen.width / 2);
 	screen.half.height = Math.floor(screen.height / 2);
-	document.documentElement.setAttribute('width', screen.width);
-	document.documentElement.setAttribute('height', screen.height);
+	body.setAttribute('x', (w - screen.width) / 2);
+	body.setAttribute('y', (h - screen.height) / 2);
+	body.setAttribute('width', screen.width);
+	body.setAttribute('height', screen.height);
 }
 
 update_dimensions();
@@ -223,14 +226,14 @@ Player.prototype.turn_right = function turn_right() {
 var SVG = 'http://www.w3.org/2000/svg';
 
 function clear_screen() {
-	var n = Array.from(document.documentElement.childNodes);
+	var n = Array.from(body.childNodes);
 	for (var i=0; i<n.length; ++i) {
 		switch (n[i].tagName) {
 			case 'title':
 			case 'style':
 				break;
 			default:
-				document.documentElement.removeChild(n[i]);
+				body.removeChild(n[i]);
 		}
 	}
 }
@@ -292,7 +295,7 @@ Drawer.prototype.draw_plane = function draw_plane(pos, height, colour) {
 };
 
 Drawer.prototype.decay = function decay(pos) {
-	return DECAY_RATE**(pos[1]-1);
+	return DECAY_RATE**Math.sqrt(pos[0]*pos[0]+pos[1]*pos[1]);
 };
 
 Drawer.prototype.draw_tile = function draw_tile(tile, pos) {
@@ -310,8 +313,8 @@ Drawer.prototype.draw_tile = function draw_tile(tile, pos) {
 		text.setAttribute('y', 0.1*ry);
 		text.setAttribute('font-size', 0.4*ry);
 		text.setAttribute('fill', '#FFFFFF');
-		text.setAttribute('stroke', '#3F3F3F');
 		text.setAttribute('stroke-width', 0.01*ry);
+		text.setAttribute('stroke', '#3F3F3F');
 		text.appendChild(document.createTextNode('EXIT'));
 		this.add_element(pos, text);
 		var polygon = document.createElementNS(SVG, 'polygon');
@@ -368,8 +371,8 @@ Drawer.prototype.draw_front = function draw_front(pos) {
 			'fill',
 			this.colour_code(this.brighten(tile.colour, this.decay(pos)))
 		);
-		polygon.setAttribute('stroke', WALL_BORDER_COLOUR);
 		polygon.setAttribute('stroke-width', WALL_BORDER_WIDTH);
+		polygon.setAttribute('stroke', WALL_BORDER_COLOUR);
 		return this.add_element(pos, polygon);
 	} else {
 		if (this.trace_repeated(pos)) return;
@@ -402,8 +405,8 @@ Drawer.prototype.draw_left = function draw_left(pos) {
 			'fill',
 			this.colour_code(this.brighten(tile.colour, this.decay(pos)))
 		);
-		polygon.setAttribute('stroke', WALL_BORDER_COLOUR);
 		polygon.setAttribute('stroke-width', WALL_BORDER_WIDTH);
+		polygon.setAttribute('stroke', WALL_BORDER_COLOUR);
 		return this.add_element(pos, polygon);
 	} else {
 		if (this.trace_repeated(pos)) return;
@@ -435,8 +438,8 @@ Drawer.prototype.draw_right = function draw_right(pos) {
 			'fill',
 			this.colour_code(this.brighten(tile.colour, this.decay(pos)))
 		);
-		polygon.setAttribute('stroke', WALL_BORDER_COLOUR);
 		polygon.setAttribute('stroke-width', WALL_BORDER_WIDTH);
+		polygon.setAttribute('stroke', WALL_BORDER_COLOUR);
 		return this.add_element(pos, polygon);
 	} else {
 		if (this.trace_repeated(pos)) return;
@@ -453,20 +456,20 @@ Drawer.prototype.draw_info = function draw_info() {
 	text.setAttribute('font-size', 0.1);
 	text.setAttribute('font-weight', 'bold');
 	text.setAttribute('fill', '#FFDF7F');
-	text.setAttribute('stroke', '#00003F');
 	text.setAttribute('stroke-width', 0.0025);
+	text.setAttribute('stroke', '#00003F');
 	text.appendChild(
 		document.createTextNode(
 			'SIZE: ' + (this.player.maze.size - 2).toString()
 		)
 	);
-	return document.documentElement.appendChild(text);
+	return body.appendChild(text);
 };
 
 Drawer.prototype.output = function output() {
 	return this.elements
 		.sort(function (a, b) {return b[0] - a[0];})
-		.forEach(function (e) {document.documentElement.appendChild(e[1]);});
+		.forEach(function (e) {body.appendChild(e[1]);});
 };
 
 Drawer.prototype.draw_maze = function draw_maze() {
@@ -479,7 +482,7 @@ Drawer.prototype.draw_maze = function draw_maze() {
 
 /*** Main Program ***/
 
-function run() {
+function play() {
 	var maze = new Maze;
 	var player = new Player(maze);
 	var drawer = new Drawer(player);
@@ -527,6 +530,19 @@ function run() {
 				}
 			}
 		}
+	);
+}
+
+function run() {
+	function close() {
+		document.removeEventListener('keyup', close);
+		document.removeEventListener('mouseup', close);
+		return play();
+	}
+	document.addEventListener('keyup', close);
+	document.addEventListener('mouseup', close);
+	body.removeChild(
+		document.getElementsByTagName('g').item(0)
 	);
 }
 
