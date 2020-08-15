@@ -1,0 +1,61 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<html xmlns='http://www.w3.org/1999/xhtml'>
+	<title>Oscillator</title>
+	<head>
+		<script type='text/ecmascript'>
+			<![CDATA[
+				void function () {
+					if (document.readyState !== "loading") return this.call(document);
+					else return document.addEventListener("DOMContentLoaded", this);
+				}.call(
+					function () {
+						'use strict';
+						var frequency = document.querySelector('input[type="number"]');
+						var buttons = document.querySelectorAll('input[type="button"]');
+						var play = buttons.item(0);
+						var mute = buttons.item(1);
+						if (typeof AudioContext === 'undefined') {
+							play.disabled = true;
+							mute.disabled = true;
+							return;
+						}
+						var audio = new AudioContext();
+						var oscillator = null;
+						function stop() {
+							if (Object.is(oscillator, null)) return;
+							oscillator.stop();
+							oscillator.disconnect();
+							oscillator = null;
+						}
+						play.addEventListener(
+							'click',
+							function () {
+								if (!Object.is(oscillator, null)) stop();
+								var f = Number.parseInt(frequency.value);
+								if (Number.isNaN(f)) return;
+								oscillator = audio.createOscillator();
+								oscillator.type = 'sine';
+								oscillator.connect(audio.destination);
+								oscillator.frequency.value = f;
+								return oscillator.start();
+							}
+						);
+						mute.addEventListener('click', stop);
+					}
+				);
+			]]>
+		</script>
+	</head>
+	<body>
+		<form>
+			<label style='display: flex; align-items: center'>
+				Frequency
+				<input type='number' value='440' style='flex-grow: 1'/>
+			</label>
+			<div style='display: flex; align-items: center'>
+				<input type='button' value='Play'/>
+				<input type='button' value='Mute'/>
+			</div>
+		</form>
+	</body>
+</html>

@@ -1,4 +1,4 @@
-(function(f){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',f);else f();})(function () {
+void function(f){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',f);else f();}(function () {
 'use strict';
 
 /*** Constants ***/
@@ -180,7 +180,6 @@ Maze.prototype.generate = function generate(size) {
 
 function play_music(optional_done) {
 	if (typeof AudioContext === 'undefined') return;
-	console.log('play_music');
 	var audio = new AudioContext();
 	function play_note(frequency, volume, start, stop) {
 		var oscillator = audio.createOscillator();

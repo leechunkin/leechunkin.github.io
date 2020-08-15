@@ -4,10 +4,10 @@
 	<head>
 		<script type='text/ecmascript'>
 			<![CDATA[
-				(function () {
+				void function () {
 					if (document.readyState !== "loading") return this.call(document);
 					else return document.addEventListener("DOMContentLoaded", this);
-				}).call(
+				}.call(
 					function () {
 						'use strict';
 						function decode(form, RE) {
