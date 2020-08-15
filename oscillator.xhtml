@@ -5,7 +5,7 @@
 		<script type='text/ecmascript'>
 			<![CDATA[
 				void function () {
-					if (document.readyState !== "loading") return this.call(document);
+					if (document.readyState !== "loading") return this();
 					else return document.addEventListener("DOMContentLoaded", this);
 				}.call(
 					function () {
@@ -31,12 +31,12 @@
 							'click',
 							function () {
 								if (!Object.is(oscillator, null)) stop();
-								var f = Number.parseInt(frequency.value);
+								var f = Number.parseFloat(frequency.value);
 								if (Number.isNaN(f)) return;
 								oscillator = audio.createOscillator();
 								oscillator.type = 'sine';
-								oscillator.connect(audio.destination);
 								oscillator.frequency.value = f;
+								oscillator.connect(audio.destination);
 								return oscillator.start();
 							}
 						);

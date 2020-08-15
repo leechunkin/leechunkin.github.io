@@ -15,6 +15,10 @@ var WALL_BORDER_WIDTH = '0.005';
 
 /*** Utilities ***/
 
+function plus_2(a, b) {
+	return [a[0]+b[0], a[1]+b[1]];
+}
+
 function minus_2(a, b) {
 	return [a[0]-b[0], a[1]-b[1]];
 }
@@ -37,8 +41,8 @@ var body = document.getElementsByTagName('svg').item(1);
 function update_dimensions() {
 	var w = window.innerWidth;
 	var h = window.innerHeight;
-	var ah = Math.round(w / ASPECT_RATIO);
 	var aw = Math.round(h * ASPECT_RATIO);
+	var ah = Math.round(w / ASPECT_RATIO);
 	screen.width = Math.min(w, aw);
 	screen.height = Math.min(h, ah);
 	screen.half.width = Math.floor(screen.width / 2);
@@ -99,41 +103,47 @@ Maze.NEIGHBOURS = [[0, 1], [1, 0], [0, -1], [-1, 0]];
 Maze.THROUGH_RATE = 0.25;
 
 Maze.prototype.generate = function generate(size) {
-	var m, s, e, ee;
+	this.size = size;
+	this.start = [Math.floor(size*0.5), Math.floor(size*0.5)];
 
-	function allocate() {
-		m = new Array(size);
+	var m = new Array(size);
+	void function () {
 		for (var i=0; i<size; ++i) {
 			m[i] = new Array(size);
 			for (var j=0; j<size; ++j) {
 				m[i][j] = Tile.WALL;
 			}
 		}
-		s = new Array;
-	}
+	}.call(this);
+	var s = new Array;
+	s.push(this.start);
+	m[this.start[0]][this.start[1]] = Tile.CONSTRUCTION;
+	var e = this.start;
+	var ee = 0;
 
-	function grow() {
-		function available(from, to) {
-			if (to[0] <= 0 || to[0] >= size-1) return false;
-			if (to[1] <= 0 || to[1] >= size-1) return false;
-			if (m[to[0]][to[1]] !== Tile.WALL) return false;
-			return Maze.NEIGHBOURS.every(
-				function (neighbour) {
-					var x = to[0] + neighbour[0];
-					var y = to[1] + neighbour[1];
-					return x === from[0] && y === from[1]
-						|| Object.is(m[x][y], Tile.WALL)
-						|| Object.is(m[x][y], Tile.CONSTRUCTION)
-							&& Math.random() < Maze.THROUGH_RATE;
-				}
-			);
-		}
+	while (s.length > 0) {
 		var o = Math.random() < 0.5 ? 0 : s.length-1;
 		var p = s[o];
 		var a =
 			Maze.NEIGHBOURS
-				.map(function (n) {return [p[0]+n[0], p[1]+n[1]];})
-				.filter(function (n) {return available(p, n);});
+				.map(function (n) {return plus_2(p, n);})
+				.filter(
+					function (n) {
+						if (n[0] <= 0 || n[0] >= size-1) return false;
+						if (n[1] <= 0 || n[1] >= size-1) return false;
+						if (m[n[0]][n[1]] !== Tile.WALL) return false;
+						return Maze.NEIGHBOURS.every(
+							function (neighbour) {
+								var x = n[0] + neighbour[0];
+								var y = n[1] + neighbour[1];
+								return x === p[0] && y === p[1]
+									|| Object.is(m[x][y], Tile.WALL)
+									|| Object.is(m[x][y], Tile.CONSTRUCTION)
+										&& Math.random() < Maze.THROUGH_RATE;
+							}
+						);
+					}
+				);
 		if (a.length <= 1) {
 			m[p[0]][p[1]] = Tile.EMPTY;
 			s.splice(o, 1);
@@ -149,8 +159,13 @@ Maze.prototype.generate = function generate(size) {
 			m[t[0]][t[1]] = Tile.CONSTRUCTION;
 		}
 	}
+	m[e[0]][e[1]] = Tile.EXIT;
+	//	console.log(
+	//		'%s',
+	//		m.map(n => n.map(e => ['X','.','O','?'][e]).join('')).join('\n')
+	//	);
 
-	function build() {
+	return function () {
 		this.tiles = new Array(size);
 		for (var i=0; i<size; ++i) {
 			this.tiles[i] = new Array(size);
@@ -158,22 +173,7 @@ Maze.prototype.generate = function generate(size) {
 				this.tiles[i][j] = new Tile(m[j][i], COLOURS[i%3*3+j%3]);
 			}
 		}
-	}
-
-	this.size = size;
-	this.start = [Math.floor(size*0.5), Math.floor(size*0.5)];
-	e = this.start;
-	ee = 0;
-	allocate();
-	s.push(this.start);
-	m[this.start[0]][this.start[1]] = Tile.CONSTRUCTION;
-	while (s.length > 0) grow.call(this);
-	m[e[0]][e[1]] = Tile.EXIT;
-	//	console.log(
-	//		'%s',
-	//		m.map(n => n.map(e => ['X','.','O','?'][e]).join('')).join('\n')
-	//	);
-	return build.call(this);
+	}.call(this);
 }
 
 /*** Sound ***/
@@ -590,9 +590,9 @@ function run() {
 	}
 	document.addEventListener('keydown', close);
 	document.addEventListener('mousedown', close);
-	body.removeChild(document.getElementsByTagName('g').item(0));
+	return body.removeChild(document.getElementsByTagName('g').item(0));
 }
 
-return run();
+run();
 
 });

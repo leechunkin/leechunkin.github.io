@@ -10,8 +10,8 @@
 	<rect x='-0.8' y='-0.5' width='1.6' height='1' rx='0.05' ry='0.05' fill='#DFDFDF'/>
 	<text x='-0.35' y='-0.3' font-size='0.1' font-weight='bold' fill='#003FBF'>HOW TO PLAY</text>
 	<text x='-0.75' y='-0.2' font-size='0.05'>Press arrow keys or click screen with mouse to move.</text>
-	<text x='-0.75' y='-0.1' font-size='0.05'>The goal of the game is reach the EXIT.</text>
-	<text x='-0.75' y='0.0' font-size='0.05'>New bigger maze starts once you completed the current maze.</text>
+	<text x='-0.75' y='-0.1' font-size='0.05'>The goal is to reach the EXIT.</text>
+	<text x='-0.75' y='0.0' font-size='0.05'>Once you exit the current maze, a bigger maze starts.</text>
 	<text x='-0.75' y='0.1' font-size='0.05'>The size of the current maze is displayed on bottom-left.</text>
 	<rect x='-0.55' y='0.21' width='1.1' height='0.15' rx='0.05' ry='0.05' fill='#FFFF00'/>
 	<text x='-0.45' y='0.3' font-size='0.05' fill='#3F9F00' stroke-width='0.0005' stroke='#0000FF'>
