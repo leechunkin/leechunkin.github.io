@@ -13,6 +13,20 @@ var CEILING_BRIGHTNESS = 2;
 var WALL_BORDER_COLOUR = '#000000';
 var WALL_BORDER_WIDTH = '0.005';
 
+/*** Utilities ***/
+
+function minus_2(a, b) {
+	return [a[0]-b[0], a[1]-b[1]];
+}
+
+function norm1_2(v) {
+	return Math.abs(v[0]) + Math.abs(v[1]);
+}
+
+function norm2_2(v) {
+	return Math.sqrt(v[0]*v[0] + v[1]*v[1]);
+}
+
 /*** Screen Dimensions ***/
 
 var ASPECT_RATIO = 4 / 3;
@@ -123,10 +137,7 @@ Maze.prototype.generate = function generate(size) {
 		if (a.length <= 1) {
 			m[p[0]][p[1]] = Tile.EMPTY;
 			s.splice(o, 1);
-			var x = p[0] - this.start[0];
-			var y = p[1] - this.start[1];
-			//	var pp = Math.abs(x) + Math.abs(y);
-			var pp = Math.sqrt(x*x + y*y);
+			var pp = norm2_2(minus_2(p, this.start));
 			if (Math.random() * (pp + ee) < pp) {
 				e = p;
 				ee = pp;
@@ -165,6 +176,31 @@ Maze.prototype.generate = function generate(size) {
 	return build.call(this);
 }
 
+/*** Sound ***/
+
+function play_music(optional_done) {
+	if (typeof AudioContext === 'undefined') return;
+	console.log('play_music');
+	var audio = new AudioContext();
+	function play_note(frequency, volume, start, stop) {
+		var oscillator = audio.createOscillator();
+		oscillator.type = 'triangle';
+		oscillator.frequency.value = frequency;
+		var gain = audio.createGain();
+		gain.gain.value = volume;
+		gain.connect(audio.destination);
+		oscillator.connect(gain);
+		oscillator.start(audio.currentTime + start);
+		oscillator.stop(audio.currentTime + stop);
+	}
+	play_note(440, 0.25, 0, 2);
+	play_note(550, 0.5, 0.5, 2);
+	play_note(660, 0.75, 0.75, 2);
+	play_note(880, 1, 1, 2);
+	if (arguments.length > 1)
+		return setTimeout(optional_done, 2);
+}
+
 /*** Player ***/
 
 function Player(maze) {
@@ -173,6 +209,10 @@ function Player(maze) {
 	this.facing = 1;
 	return this;
 }
+
+Player.prototype.reset = function reset() {
+	this.position = this.maze.start;
+};
 
 Player.prototype.tile = function () {
 	return this.maze.tile(this.position);
@@ -196,6 +236,7 @@ Player.prototype.step = function step(pos) {
 	if (this.maze.tile(p).is_wall()) {
 		return false;
 	} else if (Object.is(this.maze.tile(p).type, Tile.EXIT)) {
+		play_music();
 		this.maze.generate(this.maze.size + 2);
 		this.position = this.maze.start;
 		return true;
@@ -274,7 +315,7 @@ Drawer.prototype.vertices_points = function vertices_points(v) {
 };
 
 Drawer.prototype.add_element = function add_element(pos, element) {
-	return this.elements.push([Math.abs(pos[0])+Math.abs(pos[1]), element]);
+	return this.elements.push([norm1_2(pos), element]);
 };
 
 Drawer.prototype.draw_plane = function draw_plane(pos, height, colour) {
@@ -295,7 +336,7 @@ Drawer.prototype.draw_plane = function draw_plane(pos, height, colour) {
 };
 
 Drawer.prototype.decay = function decay(pos) {
-	return DECAY_RATE**Math.sqrt(pos[0]*pos[0]+pos[1]*pos[1]);
+	return DECAY_RATE ** norm2_2(pos);
 };
 
 Drawer.prototype.draw_tile = function draw_tile(tile, pos) {
@@ -449,6 +490,16 @@ Drawer.prototype.draw_right = function draw_right(pos) {
 	}
 };
 
+Drawer.prototype.draw_maze = function draw_maze() {
+	return this.draw_front([0, 0]);
+};
+
+Drawer.prototype.output = function output() {
+	return this.elements
+		.sort(function (a, b) {return b[0] - a[0];})
+		.forEach(function (e) {body.appendChild(e[1]);});
+};
+
 Drawer.prototype.draw_info = function draw_info() {
 	var text = document.createElementNS(SVG, 'text');
 	text.setAttribute('x', -0.95);
@@ -466,15 +517,9 @@ Drawer.prototype.draw_info = function draw_info() {
 	return body.appendChild(text);
 };
 
-Drawer.prototype.output = function output() {
-	return this.elements
-		.sort(function (a, b) {return b[0] - a[0];})
-		.forEach(function (e) {body.appendChild(e[1]);});
-};
-
-Drawer.prototype.draw_maze = function draw_maze() {
+Drawer.prototype.draw_screen = function draw_screen() {
 	clear_screen();
-	this.draw_front([0, 0]);
+	this.draw_maze();
 	this.output();
 	this.draw_info();
 	return this.reset();
@@ -487,46 +532,51 @@ function play() {
 	var player = new Player(maze);
 	var drawer = new Drawer(player);
 
-	drawer.draw_maze();
+	drawer.draw_screen();
 
 	document.addEventListener(
 		'keydown',
 		function keydown(event) {
 			if (event.key === 'ArrowUp') {
 				if (player.step_forward())
-					return drawer.draw_maze();
+					return drawer.draw_screen();
 			} else if (event.key === 'ArrowDown') {
 				if (player.step_backward())
-					return drawer.draw_maze();
+					return drawer.draw_screen();
 			} else if (event.key === 'ArrowLeft') {
 				player.turn_left()
-				return drawer.draw_maze();
+				return drawer.draw_screen();
 			} else if (event.key === 'ArrowRight') {
 				player.turn_right()
-				return drawer.draw_maze();
+				return drawer.draw_screen();
 			}
 		}
 	);
-	document.addEventListener(
+	body.addEventListener(
 		'mousedown',
 		function mousedown(event) {
-			var bl_ur = event.clientX/event.clientY < ASPECT_RATIO;
-			var ul_br = event.clientX/(screen.height-event.clientY) < ASPECT_RATIO;
+			console.log('mousedown', event);
+			var b = this.getBoundingClientRect();
+			console.log('b =', b);
+			var x = event.clientX - b.x;
+			var y = event.clientY - b.y;
+			var bl_ur = x/y < ASPECT_RATIO;
+			var ul_br = x/(b.height-y) < ASPECT_RATIO;
 			if (bl_ur) {
 				if (ul_br) {
 					player.turn_left()
-					return drawer.draw_maze();
+					return drawer.draw_screen();
 				} else {
 					if (player.step_backward())
-						return drawer.draw_maze();
+						return drawer.draw_screen();
 				}
 			} else {
 				if (ul_br) {
 					if (player.step_forward())
-						return drawer.draw_maze();
+						return drawer.draw_screen();
 				} else {
 					player.turn_right()
-					return drawer.draw_maze();
+					return drawer.draw_screen();
 				}
 			}
 		}
@@ -535,17 +585,15 @@ function play() {
 
 function run() {
 	function close() {
-		document.removeEventListener('keyup', close);
-		document.removeEventListener('mouseup', close);
+		document.removeEventListener('keydown', close);
+		document.removeEventListener('mousedown', close);
 		return play();
 	}
-	document.addEventListener('keyup', close);
-	document.addEventListener('mouseup', close);
-	body.removeChild(
-		document.getElementsByTagName('g').item(0)
-	);
+	document.addEventListener('keydown', close);
+	document.addEventListener('mousedown', close);
+	body.removeChild(document.getElementsByTagName('g').item(0));
 }
 
-run();
+return run();
 
 });
