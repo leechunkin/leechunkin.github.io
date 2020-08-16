@@ -45,10 +45,12 @@ function update_dimensions() {
 	var ah = Math.round(w / ASPECT_RATIO);
 	screen.width = Math.min(w, aw);
 	screen.height = Math.min(h, ah);
+	screen.x = Math.round((w - screen.width) / 2);
+	screen.y = Math.round((h - screen.height) / 2);
 	screen.half.width = Math.floor(screen.width / 2);
 	screen.half.height = Math.floor(screen.height / 2);
-	body.setAttribute('x', (w - screen.width) / 2);
-	body.setAttribute('y', (h - screen.height) / 2);
+	body.setAttribute('x', screen.x);
+	body.setAttribute('y', screen.y);
 	body.setAttribute('width', screen.width);
 	body.setAttribute('height', screen.height);
 }
@@ -106,7 +108,7 @@ Maze.prototype.generate = function generate(size) {
 	this.size = size;
 	this.start = [Math.floor(size*0.5), Math.floor(size*0.5)];
 
-	var m = new Array(size);
+	var m = new Array(size);  /* 2D array for new maze */
 	void function () {
 		for (var i=0; i<size; ++i) {
 			m[i] = new Array(size);
@@ -115,11 +117,11 @@ Maze.prototype.generate = function generate(size) {
 			}
 		}
 	}.call(this);
-	var s = new Array;
+	var s = new Array;  /* leading points */
 	s.push(this.start);
 	m[this.start[0]][this.start[1]] = Tile.CONSTRUCTION;
-	var e = this.start;
-	var ee = 0;
+	var e = this.start;  /* exit point */
+	var d = 0;  /* distance between start and exit point */
 
 	while (s.length > 0) {
 		var o = Math.random() < 0.5 ? 0 : s.length-1;
@@ -148,9 +150,9 @@ Maze.prototype.generate = function generate(size) {
 			m[p[0]][p[1]] = Tile.EMPTY;
 			s.splice(o, 1);
 			var pp = norm2_2(minus_2(p, this.start));
-			if (Math.random() * (pp + ee) < pp) {
+			if (Math.random() * (pp + d) < pp) {
 				e = p;
-				ee = pp;
+				d = pp;
 			}
 		}
 		if (a.length > 0) {
@@ -162,18 +164,21 @@ Maze.prototype.generate = function generate(size) {
 	m[e[0]][e[1]] = Tile.EXIT;
 	//	console.log(
 	//		'%s',
-	//		m.map(n => n.map(e => ['X','.','O','?'][e]).join('')).join('\n')
+	//		m.map(n => n.map(e => ['X','.','O'][e]||'?').join('')).join('\n')
 	//	);
 
-	return function () {
-		this.tiles = new Array(size);
-		for (var i=0; i<size; ++i) {
-			this.tiles[i] = new Array(size);
-			for (var j=0; j<size; ++j) {
-				this.tiles[i][j] = new Tile(m[j][i], COLOURS[i%3*3+j%3]);
+	return (
+		function () {
+			this.tiles = new Array(size);
+			for (var i=0; i<size; ++i) {
+				this.tiles[i] = new Array(size);
+				for (var j=0; j<size; ++j) {
+					this.tiles[i][j] = new Tile(m[j][i], COLOURS[i%3*3+j%3]);
+				}
 			}
 		}
-	}.call(this);
+			.call(this)
+	);
 }
 
 /*** Sound ***/
@@ -554,13 +559,10 @@ function play() {
 	body.addEventListener(
 		'mousedown',
 		function mousedown(event) {
-			console.log('mousedown', event);
-			var b = this.getBoundingClientRect();
-			console.log('b =', b);
-			var x = event.clientX - b.x;
-			var y = event.clientY - b.y;
+			var x = event.clientX - screen.x;
+			var y = event.clientY - screen.y;
 			var bl_ur = x/y < ASPECT_RATIO;
-			var ul_br = x/(b.height-y) < ASPECT_RATIO;
+			var ul_br = x/(screen.height-y) < ASPECT_RATIO;
 			if (bl_ur) {
 				if (ul_br) {
 					player.turn_left()
