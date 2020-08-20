@@ -121,7 +121,7 @@ Maze.prototype.generate = function generate(size) {
 	s.push(this.start);
 	m[this.start[0]][this.start[1]] = Tile.CONSTRUCTION;
 	var e = this.start;  /* exit point */
-	var d = 0;  /* distance between start and exit point */
+	var d = 0;  /* distance between start and exit */
 
 	while (s.length > 0) {
 		var o = Math.random() < 0.5 ? 0 : s.length-1;
@@ -197,9 +197,9 @@ function play_music(optional_done) {
 		oscillator.start(audio.currentTime + start);
 		oscillator.stop(audio.currentTime + stop);
 	}
-	play_note(440, 0.25, 0, 2);
-	play_note(550, 0.5, 0.5, 2);
-	play_note(660, 0.75, 0.75, 2);
+	play_note(440, 0.75, 0, 2);
+	play_note(550, 0.5, 0.25, 2);
+	play_note(660, 0.25, 0.5, 2);
 	play_note(880, 1, 1, 2);
 	if (arguments.length > 1)
 		return setTimeout(optional_done, 2);
