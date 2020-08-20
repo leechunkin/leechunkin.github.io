@@ -10,52 +10,93 @@
 				}.call(
 					function () {
 						'use strict';
-						var frequency = document.querySelector('input[type="number"]');
-						var buttons = document.querySelectorAll('input[type="button"]');
-						var play = buttons.item(0);
-						var mute = buttons.item(1);
-						if (typeof AudioContext === 'undefined') {
-							play.disabled = true;
-							mute.disabled = true;
-							return;
-						}
-						var audio = new AudioContext();
-						var oscillator = null;
-						function stop() {
-							if (Object.is(oscillator, null)) return;
-							oscillator.stop();
-							oscillator.disconnect();
-							oscillator = null;
-						}
-						play.addEventListener(
-							'click',
-							function () {
-								if (!Object.is(oscillator, null)) stop();
-								var f = Number.parseFloat(frequency.value);
-								if (Number.isNaN(f)) return;
-								oscillator = audio.createOscillator();
-								oscillator.type = 'sine';
-								oscillator.frequency.value = f;
-								oscillator.connect(audio.destination);
-								return oscillator.start();
+						document.body.removeChild(document.getElementsByTagName('h1').item(0));
+						if (typeof AudioContext === 'undefined')
+							return (
+								function (h1) {
+									h1.appendChild(document.createTextNode('Web Audio is required'));
+									document.body.appendChild(h1);
+								}(document.createElement('h1'))
+							);
+						var audio = new AudioContext;
+						var add_form = document.querySelector(':root > body > form');
+						var template = document.getElementsByTagName('template').item(0).content.querySelector('form');
+						function add_oscillator() {
+							var form = template.cloneNode(true);
+							var frequency = form.querySelector('input[type="number"]');
+							var amplitude = form.querySelector('input[type="range"]');
+							var buttons = form.querySelectorAll('input[type="button"]');
+							var play = buttons.item(0);
+							var mute = buttons.item(1);
+							var oscillator = null;
+							var gain = null;
+							function stop() {
+								if (!Object.is(oscillator, null)) {
+									oscillator.stop();
+									oscillator.disconnect();
+									oscillator = null;
+								}
+								if (!Object.is(gain, null)) {
+									gain.disconnect();
+									gain = null;
+								}
 							}
-						);
-						mute.addEventListener('click', stop);
+							play.addEventListener(
+								'click',
+								function () {
+									if (!Object.is(oscillator, null)) stop();
+									var f = Number.parseFloat(frequency.value);
+									if (Number.isNaN(f)) return;
+									var v = Number.parseFloat(amplitude.value);
+									if (Number.isNaN(v)) return;
+									oscillator = audio.createOscillator();
+									oscillator.type = 'sine';
+									oscillator.frequency.value = f;
+									gain = audio.createGain();
+									gain.gain.value = v;
+									gain.connect(audio.destination);
+									oscillator.connect(gain);
+									oscillator.start();
+								}
+							);
+							mute.addEventListener('click', stop);
+							document.body.insertBefore(form, add_form);
+						}
+						add_form.querySelector('input[type="button"]').addEventListener('click', add_oscillator);
+						add_oscillator();
 					}
 				);
 			]]>
 		</script>
+		<style>
+			form label {
+				display: flex;
+				align-items: center;
+			}
+			form label input {
+				flex-grow: 1;
+				margin-left: 1ex;
+			}
+			form div {
+				display: flex;
+				align-items: center;
+			}
+		</style>
 	</head>
 	<body>
+		<template>
+			<form>
+				<label>Frequency <input type='number' value='440'/></label>
+				<label>Amplitude <input type='range' min='0' max='1' step='0.01' value='0.5'/></label>
+				<div>
+					<input type='button' value='Play'/>
+					<input type='button' value='Mute'/>
+				</div>
+			</form>
+		</template>
+		<h1>Javascript is required</h1>
 		<form>
-			<label style='display: flex; align-items: center'>
-				Frequency
-				<input type='number' value='440' style='flex-grow: 1'/>
-			</label>
-			<div style='display: flex; align-items: center'>
-				<input type='button' value='Play'/>
-				<input type='button' value='Mute'/>
-			</div>
+			<input type='button' value='Add Oscillator'/>
 		</form>
 	</body>
 </html>
