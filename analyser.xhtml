@@ -1,0 +1,147 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<html xmlns='http://www.w3.org/1999/xhtml'>
+	<title>Analyser</title>
+	<head>
+		<script type='text/ecmascript'>
+			<![CDATA[
+				void function () {
+					if (document.readyState !== "loading") return this();
+					else return document.addEventListener("DOMContentLoaded", this);
+				}.call(
+					function () {
+						'use strict';
+						var notes = ['Ｃ', 'Ｃ♯', 'Ｄ', 'Ｅ♭', 'Ｅ', 'Ｆ', 'Ｆ♯', 'Ｇ', 'Ａ♭', 'Ａ', 'Ｂ♭', 'Ｂ', 'Ｃ'];
+						var show_spectrum = false;
+						function clear_body() {
+							while (!Object.is(document.body.firstChild, null))
+								document.body.removeChild(document.body.firstChild);
+						}
+						function error_message(message) {
+							clear_body();
+							var h1 = document.createElement('h1');
+							h1.appendChild(document.createTextNode(message));
+							return document.body.appendChild(h1);
+						}
+						document.body.removeChild(document.getElementsByTagName('h1').item(0));
+						if (typeof AudioContext === 'undefined')
+							return error_message('Web Audio API is required');
+						var audio = new AudioContext;
+						if (
+							typeof navigator === 'undefined'
+								|| !('mediaDevices' in navigator)
+								|| !('getUserMedia' in navigator.mediaDevices)
+						)
+							return error_message('Media Capture and Streams API is required');
+						return navigator.mediaDevices.getUserMedia({audio: true}).then(
+							function (media) {
+								var source = audio.createMediaStreamSource(media);
+								var analyser = audio.createAnalyser()
+								analyser.fftSize = 32768;
+								//	analyser.connect(audio.destination);
+								source.connect(analyser);
+								var data = new Float32Array(analyser.frequencyBinCount);
+								analyser.getFloatFrequencyData(data);
+								//	console.log('sample rate:', audio.sampleRate);
+
+								if (show_spectrum) {
+									var canvas = document.createElement('canvas');
+									canvas.setAttribute('width', window.innerWidth);
+									document.body.appendChild(canvas);
+									var canvas2d = canvas.getContext('2d');
+									if (typeof canvas2d === 'undefined')
+										return error_message('Canvas API is required');
+								}
+								var form = document.createElement('form');
+								var peak = document.createElement('input');
+								peak.setAttribute('type', 'readonly');
+								void function () {
+									var label = document.createElement('label');
+									label.appendChild(document.createTextNode('Peak '));
+									label.appendChild(peak);
+									label.appendChild(document.createTextNode('Hz'));
+									return form.appendChild(label);
+								}();
+								form.appendChild(document.createElement('br'));
+								var pitch = document.createElement('input');
+								pitch.setAttribute('type', 'readonly');
+								void function () {
+									var label = document.createElement('label');
+									label.appendChild(document.createTextNode('Pitch '));
+									label.appendChild(pitch);
+									return form.appendChild(label);
+								}();
+								form.appendChild(document.createElement('br'));
+								var cent = document.createElement('meter');
+								cent.setAttribute('min', '-50');
+								cent.setAttribute('max', '50');
+								cent.setAttribute('low', '-5.3');
+								cent.setAttribute('high', '5.3');
+								form.appendChild(cent);
+								document.body.appendChild(form);
+								function draw(time) {
+									analyser.getFloatFrequencyData(data);
+									if (show_spectrum)
+										void function () {
+											var rescale = canvas.height / (analyser.maxDecibels - analyser.minDecibels);
+											function y(value) {
+												return (analyser.maxDecibels - value) * rescale;
+											}
+											canvas2d.clearRect(0, 0, canvas.width, canvas.height);
+											canvas2d.beginPath();
+											canvas2d.moveTo(0, 0.5*canvas.height);
+											canvas2d.lineTo(canvas.width, 0.5*canvas.height);
+											canvas2d.stroke();
+											canvas2d.beginPath();
+											canvas2d.moveTo(0, y(data[0]));
+											for (var x=1; x<data.length && x<canvas.width; ++x)
+												canvas2d.lineTo(x, y(data[x]));
+											return canvas2d.stroke();
+										}();
+									void function () {
+										var peak_x = 0;
+										var peak_y = data[0];
+										for (var x=1; x<data.length; ++x)
+											if (data[x] > peak_y) {
+												peak_x = x;
+												peak_y = data[x];
+											}
+										if (peak_x > 0 && peak_x < data.length-1)
+											peak_x +=
+												(data[peak_x+1] - data[peak_x-1])
+													/ (2 * (data[peak_x-1] - 2*data[peak_x] + data[peak_x-1]));
+										var frequency = peak_x * audio.sampleRate / analyser.fftSize;
+										if (frequency > 0) {
+											peak.value = frequency;
+											var l = Math.log2(frequency / 440) + 4.75;
+											var o = Math.floor(l);
+											var p = (l - o) * 12;
+											var s = Math.floor(p + 0.5);
+											var c = (p - s) * 100;
+											var n = notes[s];
+											if (n == undefined) console.log(s, frequency);
+											pitch.value = n + o.toString() + (c>=0 ? ' +' : ' ') + c.toString();
+											cent.value = c;
+										}
+									}();
+									return requestAnimationFrame(draw);
+								}
+								return requestAnimationFrame(draw);
+							},
+							function () {
+								return error_message('Failed to receive audio input');
+							}
+						);
+					}
+				);
+			]]>
+		</script>
+		<style>
+			:root > body > form > meter {
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Javascript is required</h1>
+	</body>
+</html>

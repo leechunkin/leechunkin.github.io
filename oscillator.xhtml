@@ -86,11 +86,11 @@
 	<body>
 		<template>
 			<form>
-				<label>Frequency <input type='number' value='440'/></label>
-				<label>Amplitude <input type='range' min='0' max='1' step='0.01' value='0.5'/></label>
+				<label>Frequency <input type='number' min='10' max='22050' step='0.1' value='440'/></label>
+				<label>Amplitude <input type='range' min='0' max='1' step='any' value='0.5'/></label>
 				<div>
 					<input type='button' value='Play'/>
-					<input type='button' value='Mute'/>
+					<input type='button' value='Stop'/>
 				</div>
 			</form>
 		</template>
