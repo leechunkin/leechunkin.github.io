@@ -197,10 +197,10 @@ function play_music(optional_done) {
 		oscillator.start(audio.currentTime + start);
 		oscillator.stop(audio.currentTime + stop);
 	}
-	play_note(440, 0.75, 0, 2);
-	play_note(550, 0.5, 0.25, 2);
-	play_note(660, 0.25, 0.5, 2);
-	play_note(880, 1, 1, 2);
+	play_note(440, 0.375, 0, 2);
+	play_note(550, 0.25, 0.25, 2);
+	play_note(660, 0.125, 0.5, 2);
+	play_note(880, 0.5, 1, 2);
 	if (arguments.length > 1)
 		return setTimeout(optional_done, 2);
 }
