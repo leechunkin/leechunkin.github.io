@@ -12,7 +12,10 @@ var slide_y, slide_height;
 var slide_shift = 0;
 var slide_drag = null;
 var frame_element = document.getElementById('FRAME');
+var frame_drag_factor = .5;
 var frame_y, frame_height;
+var frame_shift = 0;
+var frame_drag = null;
 var font_scale = .75;
 var font_size, font_height;
 var draw_timer = null;
@@ -32,7 +35,7 @@ function $(tag, attributes, ...children) {
 
 function draw_rule(on_slide) {
 	var element = on_slide ? slide_element : frame_element;
-	var shift = on_slide ? slide_shift : 0;
+	var shift = on_slide ? slide_shift : frame_shift;
 	var height = on_slide ? slide_height : frame_height;
 	function draw_minor(prefix, level, v1, v2, x1, dx) {
 		var l1 = Math.log10(x1);
@@ -221,18 +224,33 @@ window.addEventListener('resize', resize);
 window.addEventListener(
 	'pointerdown',
 	function mousedown(event) {
-		slide_drag = event.clientX;
+		if (event.clientY < frame_y)
+			slide_drag = event.clientX;
+		else
+			frame_drag = event.clientX;
 	}
 );
 
 window.addEventListener(
 	'pointerup',
 	function mouseup(event) {
-		var w = canvas_width * rule_scale;
-		slide_shift += slide_drag_factor * (event.clientX - slide_drag);
-		slide_shift -= Math.floor(slide_shift / w) * w;
-		slide_drag = null;
-		schedule_redraw();
+		if (slide_drag !== null) {
+			var w = canvas_width * rule_scale;
+			slide_shift += slide_drag_factor * (event.clientX - slide_drag);
+			slide_shift -= Math.floor(slide_shift / w) * w;
+			slide_drag = null;
+			schedule_redraw();
+		}
+		if (frame_drag !== null) {
+			var w = canvas_width * rule_scale;
+			var d = frame_drag_factor * (event.clientX - frame_drag);
+			slide_shift += d;
+			slide_shift -= Math.floor(slide_shift / w) * w;
+			frame_shift += d;
+			frame_shift -= Math.floor(frame_shift / w) * w;
+			frame_drag = null;
+			schedule_redraw();
+		}
 	}
 );
 
@@ -241,6 +259,11 @@ window.addEventListener(
 	function mousedowm(event) {
 		if (slide_drag !== null) {
 			slide_element.setAttribute('x', slide_drag_factor * (event.clientX - slide_drag));
+		}
+		else if (frame_drag !== null) {
+			var x = frame_drag_factor * (event.clientX - frame_drag);
+			slide_element.setAttribute('x', x);
+			frame_element.setAttribute('x', x);
 		}
 	}
 );
