@@ -6,7 +6,7 @@
 	width='100%'
 >
 <title>Maze</title>
-<script type='text/ecmascript' xlink:href='maze.js'/>
+<script type='text/javascript' href='maze.js'/>
 <svg viewBox='-1 -0.66666666666666666 2 1.3333333333333333'>
 	<rect x='-0.8' y='-0.5' width='1.6' height='1' rx='0.05' ry='0.05' fill='#E0E0E0'/>
 	<text x='-0.35' y='-0.3' font-size='0.1' font-weight='bold' fill='#4040C0'>HOW TO PLAY</text>
