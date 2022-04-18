@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<svg
+	xmlns='http://www.w3.org/2000/svg'
+	xmlns:xlink='http://www.w3.org/1999/xlink'
+	style='background: black'
+	stroke-width='1'
+>
+<title>Slide rule</title>
+<script type='text/javascript' href='sliderule.js'/>
+<g id='CANVAS'>
+	<svg id='SLIDE'/>
+	<svg id='FRAME'/>
+</g>
+</svg>
