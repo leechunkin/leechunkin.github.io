@@ -7,17 +7,16 @@ var marker_scale = .75;
 var marker_colour = ['red', 'black', 'green', 'blue'];
 var rule_scale = .8;
 var slide_element = document.getElementById('SLIDE');
-var slide_drag_factor = .5;
 var slide_y, slide_height;
 var slide_shift = 0;
 var slide_drag = null;
 var frame_element = document.getElementById('FRAME');
-var frame_drag_factor = .5;
 var frame_y, frame_height;
 var frame_shift = 0;
 var frame_drag = null;
 var font_scale = .75;
 var font_size, font_height;
+var drag_factor = 1.;
 var draw_timer = null;
 
 function clear(element) {
@@ -52,24 +51,26 @@ function draw_rule(on_slide) {
 				var v = dv * (Math.log10(x) - l1) + v1;
 				var label = prefix + i.toString();
 				if (i > 0) {
-					element.appendChild(
-						$('line', {
-							x1: v, y1: y1,
-							x2: v, y2: y2,
-							stroke: marker_colour[level % marker_colour.length]
-						})
-					);
-					element.appendChild(
-						$(
-							'text',
-							{
-								x: v, y: on_slide ? y1 : y2 + font_height_here,
-								'font-size': font_size_here,
+					if (v > -canvas_width && v <= canvas_width) {
+						element.appendChild(
+							$('line', {
+								x1: v, y1: y1,
+								x2: v, y2: y2,
 								stroke: marker_colour[level % marker_colour.length]
-							},
-							label
-						)
-					);
+							})
+						);
+						element.appendChild(
+							$(
+								'text',
+								{
+									x: v, y: on_slide ? y1 : y2 + font_height_here,
+									'font-size': font_size_here,
+									fill: marker_colour[level % marker_colour.length]
+								},
+								label
+							)
+						);
+					}
 				}
 				var vv = dv * (Math.log10(x1 + (i + 1) * dx) - l1) + v1;
 				draw_minor(label, level + 1, v, vv, x, dx * .1);
@@ -82,13 +83,15 @@ function draw_rule(on_slide) {
 				var x = x1 + i * dx;
 				var v = dv * (Math.log10(x) - l1) + v1;
 				if (i > 0) {
-					element.appendChild(
-						$('line', {
-							x1: v, y1: i === 5 ? y3 : y1,
-							x2: v, y2: i === 5 ? y4 : y2,
-							stroke: marker_colour[level % marker_colour.length]
-						})
-					);
+					if (v > -canvas_width && v <= canvas_width) {
+						element.appendChild(
+							$('line', {
+								x1: v, y1: i === 5 ? y3 : y1,
+								x2: v, y2: i === 5 ? y4 : y2,
+								stroke: marker_colour[level % marker_colour.length]
+							})
+						);
+					}
 				}
 				var vv = dv * (Math.log10(x1 + (i + 1) * dx) - l1) + v1;
 				draw_minor(label, level + 1, v, vv, x, dx * .1);
@@ -98,6 +101,21 @@ function draw_rule(on_slide) {
 			for (var i = 2; i < 10; i += 2) {
 				var x = x1 + i * dx;
 				var v = dv * (Math.log10(x) - l1) + v1;
+				if (v > -canvas_width && v <= canvas_width) {
+					element.appendChild(
+						$('line', {
+							x1: v, y1: y1,
+							x2: v, y2: y2,
+							stroke: marker_colour[level % marker_colour.length]
+						})
+					);
+				}
+			}
+		}
+		else if (v2 - v1 > 8) {
+			var x = x1 + 5. * dx;
+			var v = dv * (Math.log10(x) - l1) + v1;
+			if (v > -canvas_width && v <= canvas_width) {
 				element.appendChild(
 					$('line', {
 						x1: v, y1: y1,
@@ -107,40 +125,32 @@ function draw_rule(on_slide) {
 				);
 			}
 		}
-		else if (v2 - v1 > 8) {
-			var x = x1 + 5. * dx;
-			var v = dv * (Math.log10(x) - l1) + v1;
-			element.appendChild(
-				$('line', {
-					x1: v, y1: y1,
-					x2: v, y2: y2,
-					stroke: marker_colour[level % marker_colour.length]
-				})
-			);
-		}
 	}
 	function draw_major(v1) {
 		var y1 = on_slide ? (1. - marker_scale) * height : 0;
 		var y2 = on_slide ? height : marker_scale * height;
 		for (var x = 1; x < 10; ++x) {
 			var v = v1 + Math.log10(x) * canvas_width * rule_scale;
-			element.appendChild(
-				$('line', {
-					x1: v, y1: y1,
-					x2: v, y2: y2,
-					stroke: 'black'
-				})
-			);
-			element.appendChild(
-				$(
-					'text',
-					{
-						x: v, y: on_slide ? y1 : y2 + font_height * font_scale,
-						'font-size': font_size * font_scale
-					},
-					x.toString()
-				)
-			);
+			if (v > -canvas_width && v <= canvas_width) {
+				element.appendChild(
+					$('line', {
+						x1: v, y1: y1,
+						x2: v, y2: y2,
+						stroke: 'black'
+					})
+				);
+				element.appendChild(
+					$(
+						'text',
+						{
+							x: v, y: on_slide ? y1 : y2 + font_height * font_scale,
+							'font-size': font_size * font_scale,
+							fill: 'black'
+						},
+						x.toString()
+					)
+				);
+			}
 			var vv = v1 + Math.log10(x + 1) * canvas_width * rule_scale;
 			draw_minor(x.toString(), 2, v, vv, x, 0.1);
 		}
@@ -179,8 +189,62 @@ function draw_frame() {
 	draw_rule(false);
 }
 
+function draw_buttons() {
+	function zoom_in_click(event) {
+		event.stopPropagation();
+		zoom(2.);
+	}
+	function zoom_out_click(event) {
+		event.stopPropagation();
+		zoom(.5);
+	}
+	var zoom_in_button =
+		$('rect', {
+			x: 0, y: 0,
+			width: 150, height: 100,
+			fill: 'orange'
+		});
+	var zoom_out_button =
+		$('rect', {
+			x: 0, y: canvas_height - 100,
+			width: 150, height: 100,
+			fill: 'cyan'
+		});
+	var zoom_in_text =
+		$(
+			'text',
+			{
+				x: 75, y: 50,
+				'text-anchor': 'middle',
+				'font-size': 20,
+				fill: 'black'
+			},
+			'Zoom In'
+		);
+	var zoom_out_text =
+		$(
+			'text',
+			{
+				x: 75, y: canvas_height - 40,
+				'text-anchor': 'middle',
+				'font-size': 20,
+				fill: 'black'
+			},
+			'Zoom Out'
+		);
+	zoom_in_button.addEventListener('pointerdown', zoom_in_click);
+	zoom_out_button.addEventListener('pointerdown', zoom_out_click);
+	zoom_in_text.addEventListener('pointerdown', zoom_in_click);
+	zoom_out_text.addEventListener('pointerdown', zoom_out_click);
+	canvas.appendChild(zoom_in_button);
+	canvas.appendChild(zoom_out_button);
+	canvas.appendChild(zoom_in_text);
+	canvas.appendChild(zoom_out_text);
+}
+
 function draw_canvas() {
 	clear(canvas);
+	draw_buttons();
 	slide_element =
 		$('svg', {
 			y: slide_y,
@@ -205,6 +269,15 @@ function schedule_redraw() {
 					return draw_canvas();
 				}
 			);
+}
+
+function zoom(factor) {
+	if (rule_scale < 32 && factor > 1 || rule_scale > 0.15 && factor < 1) {
+		rule_scale *= factor;
+		slide_shift *= factor;
+		frame_shift *= factor;
+		schedule_redraw();
+	}
 }
 
 function resize() {
@@ -236,14 +309,14 @@ window.addEventListener(
 	function mouseup(event) {
 		if (slide_drag !== null) {
 			var w = canvas_width * rule_scale;
-			slide_shift += slide_drag_factor * (event.clientX - slide_drag);
+			slide_shift += drag_factor * (event.clientX - slide_drag);
 			slide_shift -= Math.floor(slide_shift / w) * w;
 			slide_drag = null;
 			schedule_redraw();
 		}
 		if (frame_drag !== null) {
 			var w = canvas_width * rule_scale;
-			var d = frame_drag_factor * (event.clientX - frame_drag);
+			var d = drag_factor * (event.clientX - frame_drag);
 			slide_shift += d;
 			slide_shift -= Math.floor(slide_shift / w) * w;
 			frame_shift += d;
@@ -258,10 +331,10 @@ window.addEventListener(
 	'pointermove',
 	function mousedowm(event) {
 		if (slide_drag !== null) {
-			slide_element.setAttribute('x', slide_drag_factor * (event.clientX - slide_drag));
+			slide_element.setAttribute('x', drag_factor * (event.clientX - slide_drag));
 		}
 		else if (frame_drag !== null) {
-			var x = frame_drag_factor * (event.clientX - frame_drag);
+			var x = drag_factor * (event.clientX - frame_drag);
 			slide_element.setAttribute('x', x);
 			frame_element.setAttribute('x', x);
 		}
