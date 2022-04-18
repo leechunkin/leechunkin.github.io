@@ -3,8 +3,8 @@ void function(f){if(document.readyState==='loading')document.addEventListener('D
 
 var canvas = document.getElementById('CANVAS');
 var canvas_width, canvas_height;
-var marker_scale = .8;
-var marker_colour = ['blue', 'green', 'red'];
+var marker_scale = .75;
+var marker_colour = ['red', 'black', 'green', 'blue'];
 var rule_scale = .8;
 var slide_element = document.getElementById('SLIDE');
 var slide_drag_factor = .5;
@@ -13,7 +13,7 @@ var slide_shift = 0;
 var slide_drag = null;
 var frame_element = document.getElementById('FRAME');
 var frame_y, frame_height;
-var font_scale = .5;
+var font_scale = .75;
 var font_size, font_height;
 var draw_timer = null;
 
@@ -40,10 +40,10 @@ function draw_rule(on_slide) {
 		var dv = (v2 - v1) / (l2 - l1);
 		var y1 = on_slide ? (1. - Math.pow(marker_scale, level)) * height : 0;
 		var y2 = on_slide ? height : Math.pow(marker_scale, level) * height;
-		if (v2 - v1 > 0.125 * canvas_width) {
-			var font_scale_here = Math.pow(font_scale, level);
-			var font_height_here = font_height * font_scale_here;
-			var font_size_here = font_size * font_scale_here;
+		var font_scale_here = Math.pow(font_scale, level);
+		var font_height_here = font_height * font_scale_here;
+		var font_size_here = font_size * font_scale_here;
+		if (v2 - v1 > font_size_here * 20) {
 			for (var i = 0; i < 10; ++i) {
 				var x = x1 + i * dx;
 				var v = dv * (Math.log10(x) - l1) + v1;
@@ -72,26 +72,26 @@ function draw_rule(on_slide) {
 				draw_minor(label, level + 1, v, vv, x, dx * .1);
 			}
 		}
-		else if (v2 - v1 > 64) {
-			var y3 = on_slide ? (1. - Math.pow(marker_scale, level + 1)) * height : 0;
-			var y4 = on_slide ? height : Math.pow(marker_scale, level + 1) * height;
+		else if (v2 - v1 > 40) {
+			var y3 = on_slide ? (1. - Math.pow(marker_scale, level - .5)) * height : 0;
+			var y4 = on_slide ? height : Math.pow(marker_scale, level - .5) * height;
 			for (var i = 0; i < 10; ++i) {
 				var x = x1 + i * dx;
 				var v = dv * (Math.log10(x) - l1) + v1;
 				if (i > 0) {
 					element.appendChild(
 						$('line', {
-							x1: v, y1: i === 5 ? y1 : y3,
-							x2: v, y2: i === 5 ? y2 : y4,
+							x1: v, y1: i === 5 ? y3 : y1,
+							x2: v, y2: i === 5 ? y4 : y2,
 							stroke: marker_colour[level % marker_colour.length]
 						})
 					);
 				}
 				var vv = dv * (Math.log10(x1 + (i + 1) * dx) - l1) + v1;
-				draw_minor(label, level + 2, v, vv, x, dx * .1);
+				draw_minor(label, level + 1, v, vv, x, dx * .1);
 			}
 		}
-		else if (v2 - v1 > 32) {
+		else if (v2 - v1 > 20) {
 			for (var i = 2; i < 10; i += 2) {
 				var x = x1 + i * dx;
 				var v = dv * (Math.log10(x) - l1) + v1;
@@ -132,8 +132,8 @@ function draw_rule(on_slide) {
 				$(
 					'text',
 					{
-						x: v, y: on_slide ? y1 : y2 + font_height * .5,
-						'font-size': font_size * .5
+						x: v, y: on_slide ? y1 : y2 + font_height * font_scale,
+						'font-size': font_size * font_scale
 					},
 					x.toString()
 				)
