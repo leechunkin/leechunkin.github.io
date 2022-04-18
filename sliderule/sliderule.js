@@ -16,7 +16,7 @@ var frame_shift = 0;
 var frame_drag = null;
 var font_scale = .75;
 var font_size, font_height;
-var drag_factor = 1.;
+var drag_factor = .5;
 var draw_timer = null;
 
 function clear(element) {
