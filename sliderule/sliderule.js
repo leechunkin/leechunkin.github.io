@@ -357,6 +357,13 @@ window.addEventListener(
 	}
 );
 
+window.addEventListener(
+	'pointercancel',
+	function pointercancel(event) {
+		schedule_redraw();
+	}
+);
+
 void (
 	function run() {
 		resize();
