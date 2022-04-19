@@ -18,6 +18,8 @@ var font_scale = .75;
 var font_size, font_height;
 var drag_factor = .5;
 var draw_timer = null;
+var touch_last;
+
 
 function clear(element) {
 	element.textContent = null;
@@ -200,7 +202,7 @@ function draw_buttons() {
 	}
 	var zoom_in_button =
 		$('rect', {
-			x: 0, y: 0,
+			x: canvas_width - 150, y: canvas_height - 100,
 			width: 150, height: 100,
 			fill: 'orange'
 		});
@@ -214,7 +216,7 @@ function draw_buttons() {
 		$(
 			'text',
 			{
-				x: 75, y: 50,
+				x: canvas_width - 75, y: canvas_height - 38,
 				'text-anchor': 'middle',
 				'font-size': 20,
 				fill: 'black'
@@ -225,7 +227,7 @@ function draw_buttons() {
 		$(
 			'text',
 			{
-				x: 75, y: canvas_height - 40,
+				x: 75, y: canvas_height - 38,
 				'text-anchor': 'middle',
 				'font-size': 20,
 				fill: 'black'
@@ -244,6 +246,20 @@ function draw_buttons() {
 
 function draw_canvas() {
 	clear(canvas);
+	canvas.appendChild(
+		$(
+			'text',
+			{
+				x: .5 * canvas_width,
+				y: 20,
+				'font-size': 20,
+				fill: 'white',
+				'text-anchor': 'middle'
+			},
+			//	canvas_width.toString()
+			'SLIDE RULE'
+		)
+	);
 	draw_buttons();
 	slide_element =
 		$('svg', {
@@ -272,7 +288,7 @@ function schedule_redraw() {
 }
 
 function zoom(factor) {
-	if (rule_scale < 32 && factor > 1 || rule_scale > 0.15 && factor < 1) {
+	if (rule_scale < 64 && factor > 1 || rule_scale > 0.15 && factor < 1) {
 		rule_scale *= factor;
 		slide_shift *= factor;
 		frame_shift *= factor;
@@ -292,52 +308,75 @@ function resize() {
 	schedule_redraw();
 }
 
+function drag_start(event) {
+	if (event.clientY < frame_y)
+		slide_drag = event.clientX;
+	else
+		frame_drag = event.clientX;
+}
+
+function drag_move(event) {
+	if (slide_drag !== null) {
+		slide_element.setAttribute('x', drag_factor * (event.clientX - slide_drag));
+	}
+	else if (frame_drag !== null) {
+		var x = drag_factor * (event.clientX - frame_drag);
+		slide_element.setAttribute('x', x);
+		frame_element.setAttribute('x', x);
+	}
+}
+
+function drag_stop(event) {
+	if (slide_drag !== null) {
+		var w = canvas_width * rule_scale;
+		slide_shift += drag_factor * (event.clientX - slide_drag);
+		slide_shift -= Math.floor(slide_shift / w) * w;
+		slide_drag = null;
+		schedule_redraw();
+	}
+	if (frame_drag !== null) {
+		var w = canvas_width * rule_scale;
+		var d = drag_factor * (event.clientX - frame_drag);
+		slide_shift += d;
+		slide_shift -= Math.floor(slide_shift / w) * w;
+		frame_shift += d;
+		frame_shift -= Math.floor(frame_shift / w) * w;
+		frame_drag = null;
+		schedule_redraw();
+	}
+}
+
 window.addEventListener('resize', resize);
+window.addEventListener('pointerdown', drag_start);
+window.addEventListener('pointermove', drag_move);
+window.addEventListener('pointerup', drag_stop);
 
 window.addEventListener(
-	'pointerdown',
-	function mousedown(event) {
-		if (event.clientY < frame_y)
-			slide_drag = event.clientX;
-		else
-			frame_drag = event.clientX;
+	'touchstart',
+	function touchstart(event) {
+		if (event.touches.length <= 0) return;
+		event.preventDefault();
+		touch_last = event.touches.item(0);
+		drag_start(touch_last);
 	}
 );
 
 window.addEventListener(
-	'pointerup',
-	function mouseup(event) {
-		if (slide_drag !== null) {
-			var w = canvas_width * rule_scale;
-			slide_shift += drag_factor * (event.clientX - slide_drag);
-			slide_shift -= Math.floor(slide_shift / w) * w;
-			slide_drag = null;
-			schedule_redraw();
-		}
-		if (frame_drag !== null) {
-			var w = canvas_width * rule_scale;
-			var d = drag_factor * (event.clientX - frame_drag);
-			slide_shift += d;
-			slide_shift -= Math.floor(slide_shift / w) * w;
-			frame_shift += d;
-			frame_shift -= Math.floor(frame_shift / w) * w;
-			frame_drag = null;
-			schedule_redraw();
-		}
+	'touchmove',
+	function touchmove(event) {
+		if (event.touches.length <= 0 || !touch_last) return;
+		event.preventDefault();
+		touch_last = event.touches.item(0);
+		drag_move(touch_last);
 	}
 );
 
 window.addEventListener(
-	'pointermove',
-	function mousedowm(event) {
-		if (slide_drag !== null) {
-			slide_element.setAttribute('x', drag_factor * (event.clientX - slide_drag));
-		}
-		else if (frame_drag !== null) {
-			var x = drag_factor * (event.clientX - frame_drag);
-			slide_element.setAttribute('x', x);
-			frame_element.setAttribute('x', x);
-		}
+	'touchend',
+	function touchend(event) {
+		if (!touch_last) return;
+		event.preventDefault();
+		drag_stop(touch_last);
 	}
 );
 
