@@ -308,75 +308,52 @@ function resize() {
 	schedule_redraw();
 }
 
-function drag_start(event) {
-	if (event.clientY < frame_y)
-		slide_drag = event.clientX;
-	else
-		frame_drag = event.clientX;
-}
-
-function drag_move(event) {
-	if (slide_drag !== null) {
-		slide_element.setAttribute('x', drag_factor * (event.clientX - slide_drag));
-	}
-	else if (frame_drag !== null) {
-		var x = drag_factor * (event.clientX - frame_drag);
-		slide_element.setAttribute('x', x);
-		frame_element.setAttribute('x', x);
-	}
-}
-
-function drag_stop(event) {
-	if (slide_drag !== null) {
-		var w = canvas_width * rule_scale;
-		slide_shift += drag_factor * (event.clientX - slide_drag);
-		slide_shift -= Math.floor(slide_shift / w) * w;
-		slide_drag = null;
-		schedule_redraw();
-	}
-	if (frame_drag !== null) {
-		var w = canvas_width * rule_scale;
-		var d = drag_factor * (event.clientX - frame_drag);
-		slide_shift += d;
-		slide_shift -= Math.floor(slide_shift / w) * w;
-		frame_shift += d;
-		frame_shift -= Math.floor(frame_shift / w) * w;
-		frame_drag = null;
-		schedule_redraw();
-	}
-}
-
 window.addEventListener('resize', resize);
-window.addEventListener('pointerdown', drag_start);
-window.addEventListener('pointermove', drag_move);
-window.addEventListener('pointerup', drag_stop);
 
 window.addEventListener(
-	'touchstart',
-	function touchstart(event) {
-		if (event.touches.length <= 0) return;
-		event.preventDefault();
-		touch_last = event.touches.item(0);
-		drag_start(touch_last);
+	'pointerdown',
+	function pointerdown(event) {
+		if (event.clientY < frame_y)
+			slide_drag = event.clientX;
+		else
+			frame_drag = event.clientX;
 	}
 );
 
 window.addEventListener(
-	'touchmove',
-	function touchmove(event) {
-		if (event.touches.length <= 0 || !touch_last) return;
-		event.preventDefault();
-		touch_last = event.touches.item(0);
-		drag_move(touch_last);
+	'pointermove',
+	function pointermove(event) {
+		if (slide_drag !== null) {
+			slide_element.setAttribute('x', drag_factor * (event.clientX - slide_drag));
+		}
+		else if (frame_drag !== null) {
+			var x = drag_factor * (event.clientX - frame_drag);
+			slide_element.setAttribute('x', x);
+			frame_element.setAttribute('x', x);
+		}
 	}
 );
 
 window.addEventListener(
-	'touchend',
-	function touchend(event) {
-		if (!touch_last) return;
-		event.preventDefault();
-		drag_stop(touch_last);
+	'pointerup',
+	function pointerup(event) {
+		if (slide_drag !== null) {
+			var w = canvas_width * rule_scale;
+			slide_shift += drag_factor * (event.clientX - slide_drag);
+			slide_shift -= Math.floor(slide_shift / w) * w;
+			slide_drag = null;
+			schedule_redraw();
+		}
+		if (frame_drag !== null) {
+			var w = canvas_width * rule_scale;
+			var d = drag_factor * (event.clientX - frame_drag);
+			slide_shift += d;
+			slide_shift -= Math.floor(slide_shift / w) * w;
+			frame_shift += d;
+			frame_shift -= Math.floor(frame_shift / w) * w;
+			frame_drag = null;
+			schedule_redraw();
+		}
 	}
 );
 
