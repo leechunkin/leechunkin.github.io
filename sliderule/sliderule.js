@@ -3,7 +3,7 @@ void function(f){if(document.readyState==='loading')document.addEventListener('D
 
 var canvas = document.getElementById('CANVAS');
 var canvas_width, canvas_height;
-var marker_scale = .75;
+var marker_scale = 2./3.;
 var marker_colour = ['red', 'black', 'green', 'blue'];
 var rule_scale = .8;
 var slide_element = document.getElementById('SLIDE');
@@ -15,7 +15,8 @@ var frame_y, frame_height;
 var frame_shift = 0;
 var frame_drag = null;
 var font_scale = .75;
-var font_size, font_height;
+var font_size = 32;
+var font_height = 24;
 var drag_factor = .5;
 var draw_timer = null;
 var touch_last;
@@ -38,6 +39,7 @@ function draw_rule(on_slide) {
 	var element = on_slide ? slide_element : frame_element;
 	var shift = on_slide ? slide_shift : frame_shift;
 	var height = on_slide ? slide_height : frame_height;
+	var canvas_left = -2. * font_size;
 	function draw_minor(prefix, level, v1, v2, x1, dx) {
 		var l1 = Math.log10(x1);
 		var l2 = Math.log10(x1 + 10 * dx);
@@ -51,9 +53,10 @@ function draw_rule(on_slide) {
 			for (var i = 0; i < 10; ++i) {
 				var x = x1 + i * dx;
 				var v = dv * (Math.log10(x) - l1) + v1;
+				var vv = dv * (Math.log10(x1 + (i + 1) * dx) - l1) + v1;
 				var label = prefix + i.toString();
 				if (i > 0) {
-					if (v > -canvas_width && v <= canvas_width) {
+					if (v <= canvas_width && vv >= -canvas_left) {
 						element.appendChild(
 							$('line', {
 								x1: v, y1: y1,
@@ -74,7 +77,6 @@ function draw_rule(on_slide) {
 						);
 					}
 				}
-				var vv = dv * (Math.log10(x1 + (i + 1) * dx) - l1) + v1;
 				draw_minor(label, level + 1, v, vv, x, dx * .1);
 			}
 		}
@@ -84,8 +86,9 @@ function draw_rule(on_slide) {
 			for (var i = 0; i < 10; ++i) {
 				var x = x1 + i * dx;
 				var v = dv * (Math.log10(x) - l1) + v1;
+				var vv = dv * (Math.log10(x1 + (i + 1) * dx) - l1) + v1;
 				if (i > 0) {
-					if (v > -canvas_width && v <= canvas_width) {
+					if (v <= canvas_width && vv >= 0) {
 						element.appendChild(
 							$('line', {
 								x1: v, y1: i === 5 ? y3 : y1,
@@ -95,7 +98,6 @@ function draw_rule(on_slide) {
 						);
 					}
 				}
-				var vv = dv * (Math.log10(x1 + (i + 1) * dx) - l1) + v1;
 				draw_minor(label, level + 1, v, vv, x, dx * .1);
 			}
 		}
@@ -103,7 +105,7 @@ function draw_rule(on_slide) {
 			for (var i = 2; i < 10; i += 2) {
 				var x = x1 + i * dx;
 				var v = dv * (Math.log10(x) - l1) + v1;
-				if (v > -canvas_width && v <= canvas_width) {
+				if (v >= 0 && v <= canvas_width) {
 					element.appendChild(
 						$('line', {
 							x1: v, y1: y1,
@@ -117,7 +119,7 @@ function draw_rule(on_slide) {
 		else if (v2 - v1 > 8) {
 			var x = x1 + 5. * dx;
 			var v = dv * (Math.log10(x) - l1) + v1;
-			if (v > -canvas_width && v <= canvas_width) {
+			if (v >= 0 && v <= canvas_width) {
 				element.appendChild(
 					$('line', {
 						x1: v, y1: y1,
@@ -131,9 +133,10 @@ function draw_rule(on_slide) {
 	function draw_major(v1) {
 		var y1 = on_slide ? (1. - marker_scale) * height : 0;
 		var y2 = on_slide ? height : marker_scale * height;
+		var v = v1;
 		for (var x = 1; x < 10; ++x) {
-			var v = v1 + Math.log10(x) * canvas_width * rule_scale;
-			if (v > -canvas_width && v <= canvas_width) {
+			var vv = v1 + Math.log10(x + 1) * canvas_width * rule_scale;
+			if (v <= canvas_width && vv >= canvas_left) {
 				element.appendChild(
 					$('line', {
 						x1: v, y1: y1,
@@ -152,9 +155,9 @@ function draw_rule(on_slide) {
 						x.toString()
 					)
 				);
+				draw_minor(x.toString(), 2, v, vv, x, 0.1);
 			}
-			var vv = v1 + Math.log10(x + 1) * canvas_width * rule_scale;
-			draw_minor(x.toString(), 2, v, vv, x, 0.1);
+			v = vv;
 		}
 	}
 	void (
@@ -202,21 +205,21 @@ function draw_buttons() {
 	}
 	var zoom_in_button =
 		$('rect', {
-			x: canvas_width - 150, y: canvas_height - 100,
-			width: 150, height: 100,
+			x: canvas_width - 150, y: canvas_height - 60,
+			width: 150, height: 60,
 			fill: 'orange'
 		});
 	var zoom_out_button =
 		$('rect', {
-			x: 0, y: canvas_height - 100,
-			width: 150, height: 100,
+			x: 0, y: canvas_height - 60,
+			width: 150, height: 60,
 			fill: 'cyan'
 		});
 	var zoom_in_text =
 		$(
 			'text',
 			{
-				x: canvas_width - 75, y: canvas_height - 38,
+				x: canvas_width - 75, y: canvas_height - 20,
 				'text-anchor': 'middle',
 				'font-size': 20,
 				fill: 'black'
@@ -227,7 +230,7 @@ function draw_buttons() {
 		$(
 			'text',
 			{
-				x: 75, y: canvas_height - 38,
+				x: 75, y: canvas_height - 20,
 				'text-anchor': 'middle',
 				'font-size': 20,
 				fill: 'black'
@@ -299,12 +302,10 @@ function zoom(factor) {
 function resize() {
 	canvas_width = document.documentElement.clientWidth;
 	canvas_height = document.documentElement.clientHeight;
-	slide_y = .42 * canvas_height;
-	slide_height = .08 * canvas_height;
+	slide_height = 64;
+	slide_y = .5 * canvas_height - slide_height;
 	frame_y = slide_y + slide_height;
-	frame_height = .08 * canvas_height;
-	font_size = Math.min(0.03125 * canvas_width, 0.03125 * canvas_height);
-	font_height = font_size * 0.80;
+	frame_height = 64;
 	schedule_redraw();
 }
 
