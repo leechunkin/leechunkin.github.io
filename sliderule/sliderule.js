@@ -7,11 +7,13 @@ var marker_scale = 2./3.;
 var marker_colour = ['red', 'black', 'green', 'blue'];
 var rule_scale = .8;
 var slide_element = document.getElementById('SLIDE');
-var slide_y, slide_height;
+var slide_y;
+var slide_height = 64;
 var slide_shift = 0;
 var slide_drag = null;
 var frame_element = document.getElementById('FRAME');
-var frame_y, frame_height;
+var frame_y;
+var frame_height = 64;
 var frame_shift = 0;
 var frame_drag = null;
 var font_scale = .75;
@@ -56,7 +58,7 @@ function draw_rule(on_slide) {
 				var vv = dv * (Math.log10(x1 + (i + 1) * dx) - l1) + v1;
 				var label = prefix + i.toString();
 				if (i > 0) {
-					if (v <= canvas_width && vv >= -canvas_left) {
+					if (v <= canvas_width && vv >= canvas_left) {
 						element.appendChild(
 							$('line', {
 								x1: v, y1: y1,
@@ -83,9 +85,9 @@ function draw_rule(on_slide) {
 		else if (v2 - v1 > 40) {
 			var y3 = on_slide ? (1. - Math.pow(marker_scale, level - .5)) * height : 0;
 			var y4 = on_slide ? height : Math.pow(marker_scale, level - .5) * height;
+			var v = dv * (Math.log10(x1) - l1) + v1;
 			for (var i = 0; i < 10; ++i) {
 				var x = x1 + i * dx;
-				var v = dv * (Math.log10(x) - l1) + v1;
 				var vv = dv * (Math.log10(x1 + (i + 1) * dx) - l1) + v1;
 				if (i > 0) {
 					if (v <= canvas_width && vv >= 0) {
@@ -99,6 +101,7 @@ function draw_rule(on_slide) {
 					}
 				}
 				draw_minor(label, level + 1, v, vv, x, dx * .1);
+				v = vv;
 			}
 		}
 		else if (v2 - v1 > 20) {
@@ -164,8 +167,9 @@ function draw_rule(on_slide) {
 		function draw() {
 			var w = canvas_width * rule_scale;
 			var N = Math.ceil(1. / rule_scale) + 1;
-			var l1 = Math.ceil((shift + .5 * canvas_width) / w);
-			for (var i = 0; i < N; ++i) draw_major(shift + w * (i - l1) + .5 * canvas_width * (1. - rule_scale));
+			var h = Math.ceil((.5 * canvas_width + shift) / w - .5);
+			var d = shift + .5 * canvas_width - w * (h + .5)
+			for (var i = 0; i < N; ++i) draw_major(w * i + d);
 		}()
 	);
 }
@@ -259,7 +263,6 @@ function draw_canvas() {
 				fill: 'white',
 				'text-anchor': 'middle'
 			},
-			//	canvas_width.toString()
 			'SLIDE RULE'
 		)
 	);
@@ -291,21 +294,19 @@ function schedule_redraw() {
 }
 
 function zoom(factor) {
-	if (rule_scale < 64 && factor > 1 || rule_scale > 0.15 && factor < 1) {
-		rule_scale *= factor;
-		slide_shift *= factor;
-		frame_shift *= factor;
-		schedule_redraw();
-	}
+	var scale = Math.min(51.2, Math.max(0.4, rule_scale * factor));
+	var real_factor = scale / rule_scale;
+	rule_scale = scale;
+	slide_shift *= real_factor;
+	frame_shift *= real_factor;
+	schedule_redraw();
 }
 
 function resize() {
 	canvas_width = document.documentElement.clientWidth;
 	canvas_height = document.documentElement.clientHeight;
-	slide_height = 64;
 	slide_y = .5 * canvas_height - slide_height;
 	frame_y = slide_y + slide_height;
-	frame_height = 64;
 	schedule_redraw();
 }
 
