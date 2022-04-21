@@ -51,7 +51,7 @@ function draw_rule(on_slide) {
 		var font_scale_here = Math.pow(font_scale, level);
 		var font_height_here = font_height * font_scale_here;
 		var font_size_here = font_size * font_scale_here;
-		if (v2 - v1 > font_size_here * 20) {
+		if (v2 - v1 > font_size_here * 25) {
 			for (var i = 0; i < 10; ++i) {
 				var x = x1 + i * dx;
 				var v = dv * (Math.log10(x) - l1) + v1;
@@ -363,6 +363,16 @@ window.addEventListener(
 	'pointercancel',
 	function pointercancel(event) {
 		schedule_redraw();
+	}
+);
+
+window.addEventListener(
+	'wheel',
+	function wheel(event) {
+		if (event.deltaY < 0.)
+			zoom(2.);
+		else if (event.deltaY > 0.)
+			zoom(.5);
 	}
 );
 
