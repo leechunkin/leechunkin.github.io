@@ -48,10 +48,11 @@ function draw_rule(on_slide) {
 		var dv = (v2 - v1) / (l2 - l1);
 		var y1 = on_slide ? (1. - Math.pow(marker_scale, level)) * height : 0;
 		var y2 = on_slide ? height : Math.pow(marker_scale, level) * height;
+		var colour = marker_colour[level % marker_colour.length];
 		var font_scale_here = Math.pow(font_scale, level);
-		var font_height_here = font_height * font_scale_here;
 		var font_size_here = font_size * font_scale_here;
 		if (v2 - v1 > font_size_here * 25) {
+			var label_y = on_slide ? y1 : y2 + font_height * font_scale_here;
 			for (var i = 0; i < 10; ++i) {
 				var x = x1 + i * dx;
 				var v = dv * (Math.log10(x) - l1) + v1;
@@ -63,16 +64,16 @@ function draw_rule(on_slide) {
 							$('line', {
 								x1: v, y1: y1,
 								x2: v, y2: y2,
-								stroke: marker_colour[level % marker_colour.length]
+								stroke: colour
 							})
 						);
 						element.appendChild(
 							$(
 								'text',
 								{
-									x: v, y: on_slide ? y1 : y2 + font_height_here,
+									x: v, y: label_y,
 									'font-size': font_size_here,
-									fill: marker_colour[level % marker_colour.length]
+									fill: colour
 								},
 								label
 							)
@@ -95,7 +96,7 @@ function draw_rule(on_slide) {
 							$('line', {
 								x1: v, y1: i === 5 ? y3 : y1,
 								x2: v, y2: i === 5 ? y4 : y2,
-								stroke: marker_colour[level % marker_colour.length]
+								stroke: colour
 							})
 						);
 					}
@@ -113,7 +114,7 @@ function draw_rule(on_slide) {
 						$('line', {
 							x1: v, y1: y1,
 							x2: v, y2: y2,
-							stroke: marker_colour[level % marker_colour.length]
+							stroke: colour
 						})
 					);
 				}
@@ -127,7 +128,7 @@ function draw_rule(on_slide) {
 					$('line', {
 						x1: v, y1: y1,
 						x2: v, y2: y2,
-						stroke: marker_colour[level % marker_colour.length]
+						stroke: colour
 					})
 				);
 			}
@@ -294,7 +295,7 @@ function schedule_redraw() {
 }
 
 function zoom(factor) {
-	var scale = Math.min(51.2, Math.max(0.4, rule_scale * factor));
+	var scale = Math.min(409.6, Math.max(0.4, rule_scale * factor));
 	var real_factor = scale / rule_scale;
 	rule_scale = scale;
 	slide_shift *= real_factor;
