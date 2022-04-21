@@ -1,0 +1,16 @@
+{
+	"$schema": "https://json.schemastore.org/web-manifest-combined.json",
+	"name": "Slide Rule",
+	"short_name": "Slide Rule",
+	"description": "Slide rule emulator",
+	"start_url": "sliderule.svg",
+	"display": "standalone",
+	"background_color": "gray",
+	"icons": [
+		{
+			"src": "sliderule.ico",
+			"sizes": "128x128",
+			"type": "image/x-icon"
+		}
+	]
+}
