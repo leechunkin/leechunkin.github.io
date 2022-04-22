@@ -308,6 +308,8 @@ function resize() {
 	canvas_height = document.documentElement.clientHeight;
 	slide_y = .5 * canvas_height - slide_height;
 	frame_y = slide_y + slide_height;
+	document.documentElement.setAttribute('width', canvas_width);
+	document.documentElement.setAttribute('height', canvas_height);
 	schedule_redraw();
 }
 
