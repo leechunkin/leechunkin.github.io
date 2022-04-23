@@ -27,10 +27,9 @@ var cursor2_x = document.documentElement.clientWidth * ((1 - rule_scale) * .5 + 
 var cursor1_drag = null;
 var cursor2_drag = null;
 var cursor_margin = 64;
-var drag_factor = .5;
+var drag_factor = 1.;
 var draw_timer = null;
 var touch_last;
-
 
 function clear(element) {
 	element.textContent = null;
@@ -214,23 +213,49 @@ function draw_buttons() {
 		event.stopPropagation();
 		zoom(.5);
 	}
+	function drag_decrease_click(event) {
+		event.stopPropagation();
+		drag_factor = Math.max(.25, drag_factor * .5);
+		schedule_redraw();
+	}
+	function drag_increase_click(event) {
+		event.stopPropagation();
+		drag_factor = Math.min(4., drag_factor * 2.);
+		schedule_redraw();
+	}
 	var zoom_in_button =
 		$('rect', {
 			x: canvas_width - 150, y: canvas_height - button_height,
 			width: 150, height: button_height,
+			rx: 16, ry: 16,
 			fill: 'orange'
 		});
 	var zoom_out_button =
 		$('rect', {
 			x: 0, y: canvas_height - button_height,
 			width: 150, height: button_height,
+			rx: 16, ry: 16,
 			fill: 'cyan'
+		});
+	var drag_decrease_button =
+		$('rect', {
+			x: .5 * canvas_width - 150, y: canvas_height - button_height,
+			width: 150, height: button_height,
+			rx: 16, ry: 16,
+			fill: 'darkgray'
+		});
+	var drag_increase_button =
+		$('rect', {
+			x: .5 * canvas_width, y: canvas_height - button_height,
+			width: 150, height: button_height,
+			rx: 16, ry: 16,
+			fill: 'lightgray'
 		});
 	var zoom_in_text =
 		$(
 			'text',
 			{
-				x: canvas_width - 75, y: canvas_height - .5 * button_height + 12,
+				x: canvas_width - 75, y: canvas_height - .5 * button_height + 10,
 				'text-anchor': 'middle',
 				'font-size': 20,
 				fill: 'black'
@@ -241,21 +266,37 @@ function draw_buttons() {
 		$(
 			'text',
 			{
-				x: 75, y: canvas_height - .5 * button_height + 12,
+				x: 75, y: canvas_height - .5 * button_height + 10,
 				'text-anchor': 'middle',
 				'font-size': 20,
 				fill: 'black'
 			},
 			'Zoom Out'
 		);
+	var drag_text =
+		$(
+			'text',
+			{
+				x: .5 * canvas_width, y: canvas_height - .5 * button_height + 10,
+				'text-anchor': 'middle',
+				'font-size': 20,
+				fill: 'black'
+			},
+			'\u2193 Drag factor \xD7' + drag_factor + ' \u2191'
+		);
 	zoom_in_button.addEventListener('pointerdown', zoom_in_click);
 	zoom_out_button.addEventListener('pointerdown', zoom_out_click);
 	zoom_in_text.addEventListener('pointerdown', zoom_in_click);
 	zoom_out_text.addEventListener('pointerdown', zoom_out_click);
+	drag_decrease_button.addEventListener('pointerdown', drag_decrease_click);
+	drag_increase_button.addEventListener('pointerdown', drag_increase_click);
 	canvas.appendChild(zoom_in_button);
 	canvas.appendChild(zoom_out_button);
+	canvas.appendChild(drag_decrease_button);
+	canvas.appendChild(drag_increase_button);
 	canvas.appendChild(zoom_in_text);
 	canvas.appendChild(zoom_out_text);
+	canvas.appendChild(drag_text);
 }
 
 function draw_cursor() {
@@ -350,14 +391,15 @@ window.addEventListener('resize', resize);
 window.addEventListener(
 	'pointerdown',
 	function pointerdown(event) {
-		if (event.clientY < slide_y - cursor_margin) {
+		var y = event.clientY;
+		if (y < slide_y - cursor_margin) {
 			cursor2_drag = event.clientX;
 			move_cursor2(event.clientX);
-		} else if (event.clientY < frame_y) {
+		} else if (y < frame_y) {
 			slide_drag = event.clientX;
-		} else if (event.clientY <= frame_y + frame_height + cursor_margin) {
+		} else if (y < frame_y + frame_height + cursor_margin) {
 			frame_drag = event.clientX;
-		} else {
+		} else if (y < canvas_height - button_height) {
 			cursor1_drag = event.clientX;
 			move_cursor1(event.clientX);
 		}
