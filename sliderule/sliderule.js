@@ -3,6 +3,7 @@ void function(f){if(document.readyState==='loading')document.addEventListener('D
 
 var canvas = document.getElementById('CANVAS');
 var canvas_width, canvas_height;
+var button_height = 64;
 var marker_scale = 2./3.;
 var marker_colour = ['red', 'black', 'green', 'blue'];
 var rule_scale = .8;
@@ -19,6 +20,13 @@ var frame_drag = null;
 var font_scale = .75;
 var font_size = 32;
 var font_height = 24;
+var cursor1_element = document.getElementById('CURSOR1');
+var cursor2_element = document.getElementById('CURSOR2');
+var cursor1_x = document.documentElement.clientWidth * (1 - rule_scale) * .5;
+var cursor2_x = document.documentElement.clientWidth * ((1 - rule_scale) * .5 + rule_scale);
+var cursor1_drag = null;
+var cursor2_drag = null;
+var cursor_margin = 64;
 var drag_factor = .5;
 var draw_timer = null;
 var touch_last;
@@ -30,7 +38,7 @@ function clear(element) {
 
 function $(tag, attributes, ...children) {
 	var element = document.createElementNS(document.documentElement.namespaceURI, tag);
-	if (attributes != void undefined)
+	if (typeof attributes !== 'undefined')
 		for (var name in attributes)
 			element.setAttribute(name, attributes[name]);
 	element.append(children);
@@ -183,7 +191,6 @@ function draw_slide() {
 			fill: 'white'
 		})
 	);
-	canvas.appendChild(slide_element);
 	draw_rule(true);
 }
 
@@ -195,7 +202,6 @@ function draw_frame() {
 			fill: 'white'
 		})
 	);
-	canvas.appendChild(frame_element);
 	draw_rule(false);
 }
 
@@ -210,21 +216,21 @@ function draw_buttons() {
 	}
 	var zoom_in_button =
 		$('rect', {
-			x: canvas_width - 150, y: canvas_height - 60,
-			width: 150, height: 60,
+			x: canvas_width - 150, y: canvas_height - button_height,
+			width: 150, height: button_height,
 			fill: 'orange'
 		});
 	var zoom_out_button =
 		$('rect', {
-			x: 0, y: canvas_height - 60,
-			width: 150, height: 60,
+			x: 0, y: canvas_height - button_height,
+			width: 150, height: button_height,
 			fill: 'cyan'
 		});
 	var zoom_in_text =
 		$(
 			'text',
 			{
-				x: canvas_width - 75, y: canvas_height - 20,
+				x: canvas_width - 75, y: canvas_height - .5 * button_height + 12,
 				'text-anchor': 'middle',
 				'font-size': 20,
 				fill: 'black'
@@ -235,7 +241,7 @@ function draw_buttons() {
 		$(
 			'text',
 			{
-				x: 75, y: canvas_height - 20,
+				x: 75, y: canvas_height - .5 * button_height + 12,
 				'text-anchor': 'middle',
 				'font-size': 20,
 				fill: 'black'
@@ -250,6 +256,21 @@ function draw_buttons() {
 	canvas.appendChild(zoom_out_button);
 	canvas.appendChild(zoom_in_text);
 	canvas.appendChild(zoom_out_text);
+}
+
+function draw_cursor() {
+	cursor1_element.setAttribute('x', 0);
+	cursor1_element.setAttribute('y', slide_y - cursor_margin);
+	cursor1_element.setAttribute('width', cursor1_x);
+	cursor1_element.setAttribute('height', slide_height + frame_height + 2 * cursor_margin);
+	cursor1_element.setAttribute('fill', '#C0C0C0');
+	cursor1_element.setAttribute('opacity', '.5');
+	cursor2_element.setAttribute('x', cursor2_x);
+	cursor2_element.setAttribute('y', slide_y - cursor_margin);
+	cursor2_element.setAttribute('width', canvas_width - cursor2_x);
+	cursor2_element.setAttribute('height', slide_height + frame_height + 2 * cursor_margin);
+	cursor2_element.setAttribute('fill', '#C0C0C0');
+	cursor2_element.setAttribute('opacity', '.5');
 }
 
 function draw_canvas() {
@@ -268,18 +289,17 @@ function draw_canvas() {
 		)
 	);
 	draw_buttons();
-	slide_element =
-		$('svg', {
-			y: slide_y,
-			height: slide_height
-		});
-	frame_element =
-		$('svg', {
-			y: frame_y,
-			height: frame_height
-		});
+	slide_element = $('svg', {y: slide_y, height: slide_height});
+	frame_element = $('svg', {y: frame_y, height: frame_height});
+	cursor1_element = $('rect');
+	cursor2_element = $('rect');
+	canvas.appendChild(slide_element);
+	canvas.appendChild(frame_element);
+	canvas.appendChild(cursor1_element);
+	canvas.appendChild(cursor2_element);
 	draw_slide();
 	draw_frame();
+	draw_cursor();
 	draw_timer = null;
 }
 
@@ -297,20 +317,32 @@ function schedule_redraw() {
 function zoom(factor) {
 	var scale = Math.min(409.6, Math.max(0.4, rule_scale * factor));
 	var real_factor = scale / rule_scale;
+	var centre = .5 * canvas_width;
 	rule_scale = scale;
 	slide_shift *= real_factor;
 	frame_shift *= real_factor;
+	cursor1_x = centre - (centre - cursor1_x) * real_factor;
+	cursor2_x = centre - (centre - cursor2_x) * real_factor;
 	schedule_redraw();
 }
 
 function resize() {
 	canvas_width = document.documentElement.clientWidth;
 	canvas_height = document.documentElement.clientHeight;
-	slide_y = .5 * canvas_height - slide_height;
+	slide_y = .5 * (canvas_height - button_height) - slide_height;
 	frame_y = slide_y + slide_height;
 	document.documentElement.setAttribute('width', canvas_width);
 	document.documentElement.setAttribute('height', canvas_height);
 	schedule_redraw();
+}
+
+function move_cursor1(x) {
+	cursor1_element.setAttribute('width', x);
+}
+
+function move_cursor2(x) {
+	cursor2_element.setAttribute('x', x);
+	cursor2_element.setAttribute('width', canvas_width - x);
 }
 
 window.addEventListener('resize', resize);
@@ -318,23 +350,34 @@ window.addEventListener('resize', resize);
 window.addEventListener(
 	'pointerdown',
 	function pointerdown(event) {
-		if (event.clientY < frame_y)
+		if (event.clientY < slide_y - cursor_margin) {
+			cursor2_drag = event.clientX;
+			move_cursor2(event.clientX);
+		} else if (event.clientY < frame_y) {
 			slide_drag = event.clientX;
-		else
+		} else if (event.clientY <= frame_y + frame_height + cursor_margin) {
 			frame_drag = event.clientX;
+		} else {
+			cursor1_drag = event.clientX;
+			move_cursor1(event.clientX);
+		}
 	}
 );
 
 window.addEventListener(
 	'pointermove',
 	function pointermove(event) {
-		if (slide_drag !== null) {
-			slide_element.setAttribute('x', drag_factor * (event.clientX - slide_drag));
-		}
-		else if (frame_drag !== null) {
+		if (cursor2_drag !== null) {
+			move_cursor2(event.clientX);
+		} else if (slide_drag !== null) {
+			var x = drag_factor * (event.clientX - slide_drag);
+			slide_element.setAttribute('x', x);
+		} else if (frame_drag !== null) {
 			var x = drag_factor * (event.clientX - frame_drag);
 			slide_element.setAttribute('x', x);
 			frame_element.setAttribute('x', x);
+		} else if (cursor1_drag !== null) {
+			move_cursor1(event.clientX);
 		}
 	}
 );
@@ -344,7 +387,8 @@ window.addEventListener(
 	function pointerup(event) {
 		if (slide_drag !== null) {
 			var w = canvas_width * rule_scale;
-			slide_shift += drag_factor * (event.clientX - slide_drag);
+			var d = drag_factor * (event.clientX - slide_drag);
+			slide_shift += d;
 			slide_shift -= Math.floor(slide_shift / w) * w;
 			slide_drag = null;
 			schedule_redraw();
@@ -357,6 +401,18 @@ window.addEventListener(
 			frame_shift += d;
 			frame_shift -= Math.floor(frame_shift / w) * w;
 			frame_drag = null;
+			cursor1_x += d;
+			cursor2_x += d;
+			schedule_redraw();
+		}
+		if (cursor1_drag !== null) {
+			cursor1_x = event.clientX;
+			cursor1_drag = null;
+			schedule_redraw();
+		}
+		if (cursor2_drag !== null) {
+			cursor2_x = event.clientX;
+			cursor2_drag = null;
 			schedule_redraw();
 		}
 	}

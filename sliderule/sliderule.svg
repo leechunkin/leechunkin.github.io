@@ -10,5 +10,7 @@
 <g id='CANVAS'>
 	<svg id='SLIDE'/>
 	<svg id='FRAME'/>
+	<rect id='CURSOR1'/>
+	<rect id='CURSOR2'/>
 </g>
 </svg>
