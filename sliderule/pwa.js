@@ -3,11 +3,30 @@
 self.addEventListener(
 	'fetch',
 	function (event) {
-		event.responseWith(
+		event.respondWith(
 			caches.match(event.request).then(
 				function (response) {
-					if (response) return response;
-					else return fetch(event.request);
+					if (response) {
+						return Promise.resolve(response);
+					}
+					else {
+						return fetch(event.request).then(
+							function (response) {
+								if (response.ok)
+									return caches.open('sliderule').then(
+										function (cache) {
+											return cache.put(event.request, response).then(
+												function () {
+													return Promise.resolve(response);
+												}
+											);
+										}
+									)
+								else
+									return Promise.resolve(response);
+							}
+						);
+					}
 				}
 			)
 		);
