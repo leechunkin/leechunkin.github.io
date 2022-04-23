@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<html xmlns='http://www.w3.org/1999/xhtml'>
+<head>
+	<meta charset="UTF-8"/>
+	<title>Slide Rule</title>
+	<link rel='manifest' href='pwa.webmanifest'/>
+	<link rel='icon' type='image/x-icon' href='favicon.ico'/>
+	<link rel='icon' type='image/png' href='icon192.png'/>
+	<style type='text/css'>
+		body {
+			background-color: gray;
+		}
+		#buttonbar {
+			text-align: center;
+		}
+	</style>
+</head>
+<body>
+	<object type='image/svg+xml' data='sliderule.svg' width='100%' height='320'></object>
+	<p id='buttonbar' hidden=''>
+		<button id='install'>Install</button>
+	</p>
+	<script type='text/javascript'>
+		window.addEventListener(
+			'beforeinstallprompt',
+			function beforeinstallprompt(event) {
+				var install_button = document.getElementById('install');
+				var install_prompt = event;
+				install_button.addEventListener(
+					'click',
+					function click() {
+						install_button.parentElement.hidden = true;
+						this.removeEventListener('click', click);
+						return install_prompt.prompt();
+					}
+				);
+				install_button.parentElement.hidden = false;
+			}
+		);
+		if ('serviceWorker' in navigator) navigator['serviceWorker'].register('pwa.js');
+	</script>
+</body>
+</html>
