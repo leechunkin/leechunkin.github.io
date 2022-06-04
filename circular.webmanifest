@@ -1,0 +1,7 @@
+{
+	"name": "Circular",
+	"short_name": "Circular slide rule",
+	"description": "Circular slide rule in HTML application program",
+	"start_url": "circular.xhtml",
+	"display": "standalone"
+}

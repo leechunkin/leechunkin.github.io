@@ -1,0 +1,24 @@
+body {
+	margin: 0;
+	background-color: #FFF;
+}
+
+canvas, img {
+	position: fixed;
+}
+
+canvas {
+	z-index: -1;
+}
+
+img#outer {
+	z-index: 0;
+}
+
+img#inner {
+	z-index: 1;
+}
+
+img#cursor {
+	z-index: 2;
+}
