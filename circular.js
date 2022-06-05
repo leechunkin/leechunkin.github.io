@@ -8,6 +8,10 @@ void function(f){
 
 var FONT = "px serif";
 var CURSOR_WIDTH = .25;
+var COLOUR_BACKGROUND = "#FFF";
+var COLOUR_FORWARD = "#008";
+var COLOUR_BACKWARD = "#800";
+var COLOUR_LABEL = "#080";
 var CANVAS_SCALE = 2;
 
 function apply(func, thisArg, args) {
@@ -36,8 +40,8 @@ if (!cc)
 var main_dimension, main_centre;
 var canvas_dimension, canvas_centre;
 var outer_tag, inner_tag, cursor_tag;
+var stack_radius;
 var slide_radius;
-var cursor_labels;
 var inner_angle = 0;
 var cursor_angle = 0;
 
@@ -46,26 +50,39 @@ function tick_scale(n) {
 }
 
 var PI2 = 2 * Math.PI;
-var PI5 = .5 * Math.PI;
-var PI2LN10 = PI2 / Math.LN10;
+var PI_2 = .5 * Math.PI;
+var I_LN10 = 1 / Math.LN10;
+var PI2_LN10 = PI2 * I_LN10;
 
-function draw_scale_log(upside, radius, colour) {
+function draw_scale_log(upside) {
 	function d(x) {
 		return upside ? +x : -x;
 	}
 	function k(x, h) {
 		cc.setTransform(1, 0, 0, 1, canvas_centre, canvas_centre);
-		cc.rotate(PI2LN10 * Math.log(x));
+		cc.rotate(PI2_LN10 * Math.log(x));
 		cc.moveTo(0, - radius);
 		return cc.lineTo(0, - radius + d(h));
 	}
-	cc.strokeStyle = colour;
-	cc.fillStyle = colour;
+	/* radii */
+	var outer_radius = stack_radius;
+	var inner_radius = outer_radius - 1.5 * tick_scale(0);
+	var radius = upside ? outer_radius : inner_radius;
+	/* title */
+	stack_radius = inner_radius;
+	cc.fillStyle = COLOUR_LABEL;
+	cc.font = tick_scale(0) + FONT;
 	cc.textBaseline = "middle";
-	cc.textAlign = "left";
+	cc.textAlign = "right";
+	cc.fillText("x>", canvas_centre - CANVAS_SCALE, canvas_centre - radius + d(tick_scale(0)));
+	/* circle */
+	cc.strokeStyle = COLOUR_FORWARD;
+	cc.fillStyle = COLOUR_FORWARD;
 	cc.beginPath();
 	cc.arc(canvas_centre, canvas_centre, radius, 0, PI2);
 	cc.stroke();
+	/* ticks and labels */
+	cc.textAlign = "left";
 	cc.beginPath();
 	for (var x = 1; x <= 9; ++x) {
 		k(x, tick_scale(0));
@@ -80,7 +97,7 @@ function draw_scale_log(upside, radius, colour) {
 					cc.fillText(x1.toString(), CANVAS_SCALE, d(tick_scale(2)) - radius);
 				}
 			}
-			if (x < 2) {
+			if (x < 2)
 				for (var x2 = 0; x2 <= 9; ++x2) {
 					var xx1x2 = xx1 + .01 * x2;
 					if (x2 > 0)
@@ -88,39 +105,29 @@ function draw_scale_log(upside, radius, colour) {
 					if (x1 < 5)
 						k(xx1x2 + .005, tick_scale(6));
 				}
-			} else if (x < 3) {
+			else if (x < 3)
 				for (var x2 = 1; x2 <= 9; ++x2)
 					k(xx1 + .01 * x2, x2 === 5 ? tick_scale(3) : tick_scale(4));
-			} else if (x < 6) {
+			else if (x < 6)
 				for (var x2 = 1; x2 <= 4; ++x2)
 					k(xx1 + .02 * x2, tick_scale(4));
-			} else {
+			else
 				k(xx1 + .05, tick_scale(4));
-			}
 		}
 	}
 	cc.stroke();
 	cc.setTransform(1, 0, 0, 1, 0, 0);
-	return cursor_labels.push(
-		function () {
-			cc.fillStyle = "#040";
-			cc.font = tick_scale(0) + FONT;
-			cc.textBaseline = upside ? "top" : "bottom";
-			cc.textAlign = "right";
-			cc.fillText("x", - tick_scale(0), - radius);
-		}
-	);
 }
 
 function draw_outer() {
-	cc.fillStyle = "#FFF";
+	cc.fillStyle = COLOUR_BACKGROUND;
 	cc.fillRect(0, 0, canvas_dimension, canvas_dimension);
 	cc.beginPath();
 	cc.strokeStyle = "#888";
 	cc.arc(canvas_centre, canvas_centre, canvas_centre, 0, PI2);
 	cc.stroke();
-	slide_radius = canvas_centre - 1.5 * tick_scale(0);
-	draw_scale_log(false, slide_radius, "#008");
+	draw_scale_log(false);
+	slide_radius = stack_radius;
 	outer_tag = document.createElement("img");
 	outer_tag.id = "outer";
 	outer_tag.src = canvas_tag.toDataURL();
@@ -129,7 +136,7 @@ function draw_outer() {
 
 function draw_inner() {
 	cc.clearRect(0, 0, canvas_tag.width, canvas_tag.height);
-	draw_scale_log(true, slide_radius, "#008");
+	draw_scale_log(true);
 	inner_tag = document.createElement("img");
 	inner_tag.id = "inner";
 	inner_tag.src = canvas_tag.toDataURL();
@@ -143,7 +150,7 @@ function draw_cursor() {
 	cc.beginPath();
 	cc.fillStyle = "#CCC4";
 	cc.moveTo(0, 0);
-	cc.arc(0, 0, canvas_centre, - PI5 - CURSOR_WIDTH, - PI5 + CURSOR_WIDTH);
+	cc.arc(0, 0, canvas_centre, - PI_2 - CURSOR_WIDTH, - PI_2 + CURSOR_WIDTH);
 	cc.closePath();
 	cc.fill();
 	cc.beginPath();
@@ -151,8 +158,6 @@ function draw_cursor() {
 	cc.moveTo(0, 0);
 	cc.lineTo(0, -canvas_centre);
 	cc.stroke();
-	for (var i = 0; i < cursor_labels.length; ++i)
-		call(cursor_labels[i]);
 	cc.setTransform(1, 0, 0, 1, 0, 0);
 	cursor_tag = document.createElement("img");
 	cursor_tag.id = "cursor";
@@ -168,7 +173,7 @@ function draw() {
 	canvas_dimension = canvas_centre * 2;
 	canvas_tag.width = canvas_dimension;
 	canvas_tag.height = canvas_dimension;
-	cursor_labels = new Array;
+	stack_radius = canvas_centre;
 	draw_outer();
 	draw_inner();
 	draw_cursor();
