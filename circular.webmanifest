@@ -3,5 +3,12 @@
 	"short_name": "Circular slide rule",
 	"description": "Circular slide rule in HTML application program",
 	"start_url": "circular.xhtml",
-	"display": "standalone"
+	"display": "standalone",
+	"icons": [
+		{
+			"src": "circular.png",
+			"type": "image/png",
+			"sizes": "128x128"
+		}
+	]
 }
