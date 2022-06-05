@@ -7,7 +7,8 @@ void function(f){
 "use strict";
 
 var FONT = "px serif";
-var TICK = [32, 24, 16, 12, 8, 4];
+var TICK = [64, 48, 32, 24, 16, 8];
+var CURSOR_WIDTH = .25;
 
 function apply(func, thisArg, args) {
 	return func.apply(thisArg, args);
@@ -21,7 +22,7 @@ var main_tag = document.createElement("main");
 document.body.appendChild(main_tag);
 var canvas_tag = document.createElement("canvas");
 canvas_tag.hidden = true;
-main_tag.appendChild(canvas_tag);
+//	main_tag.appendChild(canvas_tag);
 var cc = canvas_tag.getContext("2d", {"alpha": true});
 if (!cc)
 	return call(
@@ -33,9 +34,12 @@ if (!cc)
 		}
 	);
 
-var dimension, centre;
+var main_dimension, main_centre;
+var canvas_dimension, canvas_centre;
 var outer_tag, inner_tag, cursor_tag;
 var slide_radius;
+var inner_angle = 0;
+var cursor_angle = 0;
 
 var PI2LN10 = 2 * Math.PI / Math.LN10;
 
@@ -44,7 +48,7 @@ function draw_scale_log(upside, radius, colour) {
 		return upside ? +x : -x;
 	}
 	function k(x, h) {
-		cc.setTransform(1, 0, 0, 1, centre, centre);
+		cc.setTransform(1, 0, 0, 1, canvas_centre, canvas_centre);
 		cc.rotate(PI2LN10 * Math.log(x));
 		cc.moveTo(0, - radius);
 		cc.lineTo(0, - radius + d(h));
@@ -54,7 +58,7 @@ function draw_scale_log(upside, radius, colour) {
 	cc.textBaseline = "middle";
 	cc.fillStyle = colour;
 	cc.beginPath();
-	cc.arc(centre, centre, radius, 0, 2 * Math.PI);
+	cc.arc(canvas_centre, canvas_centre, radius, 0, 2 * Math.PI);
 	cc.stroke();
 	cc.beginPath();
 	for (var x = 1; x <= 9; ++x) {
@@ -62,28 +66,30 @@ function draw_scale_log(upside, radius, colour) {
 		cc.font = TICK[0] + FONT;
 		cc.fillText(x.toString(), 1, - radius + d(TICK[0]));
 		for (var x1 = 0; x1 <= 9; ++x1) {
+			var xx1 = x + .1 * x1;
 			if (x1 > 0) {
-				k(x + .1 * x1, x1 === 5 ? TICK[1] : TICK[2]);
-				if (x <= 2) {
-					cc.font = (0.5 * TICK[1]).toString() + FONT;
-					cc.fillText(x.toString() + x1.toString(), 1, - radius + d(TICK[1]));
+				k(xx1, x1 === 5 ? TICK[1] : TICK[2]);
+				if (x < 5) {
+					cc.font = TICK[3].toString() + FONT;
+					cc.fillText(x1.toString(), 1, - radius + d(TICK[1]));
 				}
 			}
 			if (x < 2) {
 				for (var x2 = 0; x2 <= 9; ++x2) {
+					var xx1x2 = xx1 + .01 * x2;
 					if (x2 > 0)
-						k(x + .1 * x1 + .01 * x2, x2 === 5 ? TICK[3] : TICK[4]);
+						k(xx1x2, x2 === 5 ? TICK[3] : TICK[4]);
 					if (x1 < 5)
-						k(x + .1 * x1 + .01 * x2 + .005, TICK[5]);
+						k(xx1x2 + .005, TICK[5]);
 				}
 			} else if (x < 3) {
 				for (var x2 = 1; x2 <= 9; ++x2)
-					k(x + .1 * x1 + .01 * x2, x2 === 5 ? TICK[3] : TICK[4]);
+					k(xx1 + .01 * x2, x2 === 5 ? TICK[3] : TICK[4]);
 			} else if (x < 6) {
 				for (var x2 = 1; x2 <= 4; ++x2)
-					k(x + .1 * x1 + .02 * x2, TICK[4]);
+					k(xx1 + .02 * x2, TICK[4]);
 			} else {
-				k(x + .1 * x1 + .05, TICK[4]);
+				k(xx1 + .05, TICK[4]);
 			}
 		}
 	}
@@ -92,11 +98,13 @@ function draw_scale_log(upside, radius, colour) {
 }
 
 function draw_outer() {
-	cc.beginPath();
-	cc.strokeStyle = "#CCC";
-	cc.arc(centre, centre, centre, 0, Math.PI * 2);
-	cc.stroke();
-	slide_radius = centre - 1.5 * TICK[0];
+	cc.fillStyle = "#FFF";
+	cc.fillRect(0, 0, canvas_dimension, canvas_dimension);
+	//	cc.beginPath();
+	//	cc.strokeStyle = "#CCC";
+	//	cc.arc(canvas_centre, canvas_centre, canvas_centre, 0, Math.PI * 2);
+	//	cc.stroke();
+	slide_radius = canvas_centre - 1.5 * TICK[0];
 	draw_scale_log(false, slide_radius, "#008");
 	outer_tag = document.createElement("img");
 	outer_tag.id = "outer";
@@ -110,6 +118,7 @@ function draw_inner() {
 	inner_tag = document.createElement("img");
 	inner_tag.id = "inner";
 	inner_tag.src = canvas_tag.toDataURL();
+	inner_tag.style.rotate = inner_angle.toString() + "rad";
 	return main_tag.appendChild(inner_tag);
 }
 
@@ -117,30 +126,50 @@ function draw_cursor() {
 	cc.clearRect(0, 0, canvas_tag.width, canvas_tag.height);
 	cc.beginPath();
 	cc.fillStyle = "#CCC4";
-	cc.moveTo(centre, centre);
-	cc.arc(centre, centre, centre, -.25, +.25);
+	cc.moveTo(canvas_centre, canvas_centre);
+	cc.arc(canvas_centre, canvas_centre, canvas_centre, -CURSOR_WIDTH, +CURSOR_WIDTH);
 	cc.closePath();
 	cc.fill();
 	cc.beginPath();
 	cc.strokeStyle = "#0008";
-	cc.moveTo(centre, centre);
-	cc.lineTo(dimension, centre);
+	cc.moveTo(canvas_centre, canvas_centre);
+	cc.lineTo(canvas_dimension, canvas_centre);
 	cc.lineWidth = .5;
 	cc.stroke();
 	cursor_tag = document.createElement("img");
 	cursor_tag.id = "cursor";
 	cursor_tag.src = canvas_tag.toDataURL();
+	cursor_tag.style.rotate = cursor_angle.toString() + "rad";
 	return main_tag.appendChild(cursor_tag);
 }
 
+var inner_drag = null;
+var cursor_drag = null;
+
+function pointer_angle(x, y) {
+	return Math.atan2(y - main_centre, x - main_centre);
+}
+
+function pointerdown(event) {
+	event.preventDefault();
+	var a = pointer_angle(event.pageX, event.pageY);
+	if (Math.abs(a - cursor_angle) < CURSOR_WIDTH)
+		cursor_drag = a;
+	else
+		inner_drag = a;
+}
+
 function draw() {
-	dimension = Math.min(window.innerWidth, window.innerHeight) - 2;
-	centre = dimension / 2;
-	canvas_tag.width = dimension;
-	canvas_tag.height = dimension;
+	main_dimension = Math.min(window.innerWidth, window.innerHeight) - 2;
+	main_centre = main_dimension / 2;
+	canvas_centre = main_dimension;
+	canvas_dimension = canvas_centre * 2;
+	canvas_tag.width = canvas_dimension;
+	canvas_tag.height = canvas_dimension;
 	draw_outer();
 	draw_inner();
 	draw_cursor();
+	cursor_tag.addEventListener("pointerdown", pointerdown);
 	return cc.clearRect(0, 0, canvas_tag.width, canvas_tag.height);
 }
 
@@ -152,6 +181,33 @@ function resize() {
 }
 
 window.addEventListener("resize", resize);
-return draw();
+draw();
+
+function pointermove(event) {
+	if (inner_drag !== null) {
+		var a = pointer_angle(event.pageX, event.pageY) - inner_drag;
+		inner_tag.style.rotate = (inner_angle + a).toString() + "rad";
+	}
+	if (cursor_drag !== null) {
+		var a = pointer_angle(event.pageX, event.pageY) - cursor_drag;
+		cursor_tag.style.rotate = (cursor_angle + a).toString() + "rad";
+	}
+}
+
+function pointerup(event) {
+	if (inner_drag !== null) {
+		inner_angle += pointer_angle(event.pageX, event.pageY) - inner_drag;
+		inner_tag.style.rotate = inner_angle.toString() + "rad";
+		inner_drag = null;
+	}
+	if (cursor_drag !== null) {
+		cursor_angle += pointer_angle(event.pageX, event.pageY) - cursor_drag;
+		cursor_tag.style.rotate = cursor_angle.toString() + "rad";
+		cursor_drag = null;
+	}
+}
+
+document.addEventListener("pointermove", pointermove);
+document.addEventListener("pointerup", pointerup);
 
 });
