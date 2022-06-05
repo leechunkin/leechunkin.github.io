@@ -5,9 +5,19 @@
 	"start_url": "circular.xhtml",
 	"icons": [
 		{
-			"src": "circular.png",
+			"src": "circular.128.png",
 			"type": "image/png",
 			"sizes": "128x128"
+		},
+		{
+			"src": "circular.192.png",
+			"type": "image/png",
+			"sizes": "192x192"
+		},
+		{
+			"src": "circular.512.png",
+			"type": "image/png",
+			"sizes": "512x512"
 		}
 	],
 	"display": "standalone",
