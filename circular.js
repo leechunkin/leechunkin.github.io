@@ -54,7 +54,6 @@ function draw_scale_log(upside, radius, colour) {
 		cc.lineTo(0, - radius + d(h));
 	}
 	cc.strokeStyle = colour;
-	cc.lineWidth = .5;
 	cc.textBaseline = "middle";
 	cc.fillStyle = colour;
 	cc.beginPath();
@@ -134,7 +133,6 @@ function draw_cursor() {
 	cc.strokeStyle = "#0008";
 	cc.moveTo(canvas_centre, canvas_centre);
 	cc.lineTo(canvas_dimension, canvas_centre);
-	cc.lineWidth = .5;
 	cc.stroke();
 	cursor_tag = document.createElement("img");
 	cursor_tag.id = "cursor";
