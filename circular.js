@@ -7,7 +7,6 @@ void function(f){
 "use strict";
 
 var FONT = "px serif";
-var TICK = [64, 48, 32, 24, 16, 8];
 var CURSOR_WIDTH = .25;
 
 function apply(func, thisArg, args) {
@@ -41,6 +40,10 @@ var slide_radius;
 var inner_angle = 0;
 var cursor_angle = 0;
 
+function tick_scale(n) {
+	return Math.round(.0625 * main_dimension * Math.pow(.5, .5 * n));
+}
+
 var PI2LN10 = 2 * Math.PI / Math.LN10;
 
 function draw_scale_log(upside, radius, colour) {
@@ -61,34 +64,34 @@ function draw_scale_log(upside, radius, colour) {
 	cc.stroke();
 	cc.beginPath();
 	for (var x = 1; x <= 9; ++x) {
-		k(x, TICK[0]);
-		cc.font = TICK[0] + FONT;
-		cc.fillText(x.toString(), 1, - radius + d(TICK[0]));
+		k(x, tick_scale(0));
+		cc.font = tick_scale(0) + FONT;
+		cc.fillText(x.toString(), 2, - radius + d(tick_scale(0)));
 		for (var x1 = 0; x1 <= 9; ++x1) {
 			var xx1 = x + .1 * x1;
 			if (x1 > 0) {
-				k(xx1, x1 === 5 ? TICK[1] : TICK[2]);
+				k(xx1, x1 === 5 ? tick_scale(1) : tick_scale(2));
 				if (x < 5) {
-					cc.font = TICK[3].toString() + FONT;
-					cc.fillText(x1.toString(), 1, - radius + d(TICK[1]));
+					cc.font = tick_scale(2).toString() + FONT;
+					cc.fillText(x1.toString(), 2, - radius + d(tick_scale(2)));
 				}
 			}
 			if (x < 2) {
 				for (var x2 = 0; x2 <= 9; ++x2) {
 					var xx1x2 = xx1 + .01 * x2;
 					if (x2 > 0)
-						k(xx1x2, x2 === 5 ? TICK[3] : TICK[4]);
+						k(xx1x2, x2 === 5 ? tick_scale(3) : tick_scale(4));
 					if (x1 < 5)
-						k(xx1x2 + .005, TICK[5]);
+						k(xx1x2 + .005, tick_scale(6));
 				}
 			} else if (x < 3) {
 				for (var x2 = 1; x2 <= 9; ++x2)
-					k(xx1 + .01 * x2, x2 === 5 ? TICK[3] : TICK[4]);
+					k(xx1 + .01 * x2, x2 === 5 ? tick_scale(3) : tick_scale(4));
 			} else if (x < 6) {
 				for (var x2 = 1; x2 <= 4; ++x2)
-					k(xx1 + .02 * x2, TICK[4]);
+					k(xx1 + .02 * x2, tick_scale(4));
 			} else {
-				k(xx1 + .05, TICK[4]);
+				k(xx1 + .05, tick_scale(4));
 			}
 		}
 	}
@@ -103,7 +106,7 @@ function draw_outer() {
 	//	cc.strokeStyle = "#CCC";
 	//	cc.arc(canvas_centre, canvas_centre, canvas_centre, 0, Math.PI * 2);
 	//	cc.stroke();
-	slide_radius = canvas_centre - 1.5 * TICK[0];
+	slide_radius = canvas_centre - 1.5 * tick_scale(0);
 	draw_scale_log(false, slide_radius, "#008");
 	outer_tag = document.createElement("img");
 	outer_tag.id = "outer";

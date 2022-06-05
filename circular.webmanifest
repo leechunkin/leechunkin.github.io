@@ -1,14 +1,17 @@
 {
-	"name": "Circular",
-	"short_name": "Circular slide rule",
+	"name": "Circular slide rule",
+	"short_name": "Circular",
 	"description": "Circular slide rule in HTML application program",
 	"start_url": "circular.xhtml",
-	"display": "standalone",
 	"icons": [
 		{
 			"src": "circular.png",
 			"type": "image/png",
 			"sizes": "128x128"
 		}
-	]
+	],
+	"display": "standalone",
+	"orientation": "any",
+	"background_color": "gray",
+	"theme_color": "black"
 }
