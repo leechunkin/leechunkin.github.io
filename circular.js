@@ -190,9 +190,10 @@ function draw_scale_exp() {
 		function () {
 			cc.fillStyle = COLOUR_LABEL;
 			cc.font = tick_scale(1) + FONT;
-			cc.textBaseline = "top";
+			cc.textBaseline = "middle";
 			cc.textAlign = "right";
-			return cc.fillText("exp(x)", canvas_centre - CANVAS_SCALE, canvas_centre - radius);
+			var y = canvas_centre - radius + (SCALE_EXP_ROUNDS + 1) * line_height + tick_scale(1);
+			return cc.fillText("exp(x)", canvas_centre - CANVAS_SCALE, y);
 		}
 	);
 	/* ticks and labels */
@@ -391,7 +392,7 @@ function draw_cursor() {
 	cc.setTransform(1, 0, 0, 1, canvas_centre, canvas_centre);
 	cc.beginPath();
 	cc.fillStyle = "#CCC4";
-	var r = .03125 * canvas_dimension;
+	var r = .0625 * canvas_dimension;
 	cc.moveTo(-r, 0);
 	cc.arc(0, 0, canvas_centre, - PI_2 - CURSOR_WIDTH, - PI_2 + CURSOR_WIDTH);
 	cc.arc(0, 0, r, 0, Math.PI);
