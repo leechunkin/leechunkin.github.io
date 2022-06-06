@@ -13,6 +13,7 @@ var COLOUR_FORWARD = "#008";
 var COLOUR_BACKWARD = "#800";
 var COLOUR_LABEL = "#080";
 var CANVAS_SCALE = 2;
+var SCALE_EXP_ROUNDS = 3;
 
 function apply(func, thisArg, args) {
 	return func.apply(thisArg, args);
@@ -154,13 +155,13 @@ function draw_scale_exp() {
 		axis_points.push(ll);
 		return draw_tick_spiral(radius, line_height, ll, h);
 	}
-	function draw_round(scale, prefix) {
+	function draw_round(scale, prefix, font_size) {
 		for (var x1 = 9; x1 >= 1; --x1) {
 			var xx1 = 1 + scale * x1;
 			for (var x2 = 10; x2 >= 1; --x2) {
 				var y = k(xx1 + scale * .1 * x2, tick_scale(x2 === 5 ? 1 : 2));
 				if (x1 === 1 && x2 < 10) {
-					cc.font = tick_scale(2) + FONT;
+					cc.font = tick_scale(font_size + 1) + FONT;
 					cc.fillText(x2.toString(), CANVAS_SCALE, y + tick_scale(2));
 				}
 				if (x1 >= 4)
@@ -173,17 +174,15 @@ function draw_scale_exp() {
 						k(xx1 + scale * .1 * (x2 - .1 * x3), tick_scale(x3 === 5 ? 3 : 4));
 			}
 			var y = k(xx1, tick_scale(0));
-			cc.font = tick_scale(1) + FONT;
+			cc.font = tick_scale(font_size) + FONT;
 			cc.fillText(prefix + x1.toString(), CANVAS_SCALE, y + tick_scale(0));
 		}
 	}
-	stack_radius -= 4 * line_height;
+	stack_radius -= (SCALE_EXP_ROUNDS + 2) * line_height;
 	/* legend */
 	cc.fillStyle = COLOUR_LABEL;
 	cc.font = tick_scale(1) + FONT;
 	cc.textBaseline = "top";
-	cc.textAlign = "right";
-	cc.fillText("exp(x) ", canvas_centre - CANVAS_SCALE, canvas_centre - radius + 3 * line_height);
 	cc.textAlign = "left";
 	cc.fillText("exp(x)", canvas_centre + CANVAS_SCALE, canvas_centre - radius);
 	/* ticks and labels */
@@ -279,8 +278,8 @@ function draw_scale_exp() {
 		cc.font = tick_scale(1) + FONT;
 		cc.fillText(x1.toString(), CANVAS_SCALE, y + tick_scale(0));
 	}
-	draw_round(.1, "1.");
-	draw_round(.01, "1.0");
+	for (var i = 1; i <= SCALE_EXP_ROUNDS; ++i)
+		draw_round(Math.pow(.1, i), "1." + "0".repeat(i - 1), i);
 	cc.stroke();
 	cc.beginPath();
 	cc.setTransform(1, 0, 0, 1, canvas_centre, canvas_centre);
@@ -296,6 +295,56 @@ function draw_scale_exp() {
 	return cc.setTransform(1, 0, 0, 1, 0, 0);
 }
 
+function draw_scale_log(upside) {
+	/* radii */
+	var outer_radius = stack_radius;
+	var inner_radius = outer_radius - 1.5 * tick_scale(0);
+	var radius = upside ? outer_radius : inner_radius;
+	/* helper function */
+	function d(x) {
+		return upside ? +x : -x;
+	}
+	function k(x, h) {
+		return draw_tick_circle(radius, x, d(h));
+	}
+	/* legend */
+	stack_radius = inner_radius;
+	cc.fillStyle = COLOUR_LABEL;
+	cc.font = tick_scale(1) + FONT;
+	cc.textBaseline = "middle";
+	cc.textAlign = "right";
+	cc.fillText("log(x)", canvas_centre - CANVAS_SCALE, canvas_centre - radius + d(tick_scale(1)));
+	/* circle */
+	cc.strokeStyle = COLOUR_FORWARD;
+	cc.fillStyle = COLOUR_FORWARD;
+	cc.beginPath();
+	cc.arc(canvas_centre, canvas_centre, radius, 0, PI2);
+	cc.stroke();
+	/* ticks and labels */
+	cc.textAlign = "left";
+	cc.beginPath();
+	for (var x1 = 0; x1 <= 9; ++x1) {
+		var xx1 = .1 * x1;
+		k(xx1, tick_scale(0));
+		cc.font = tick_scale(0) + FONT;
+		cc.fillText(x1.toString(), CANVAS_SCALE, d(tick_scale(0)) - radius);
+		for (var x2 = 0; x2 <= 9; ++x2) {
+			var xx1x2 = xx1 + .01 * x2;
+			if (x2 > 0)
+				k(xx1x2, tick_scale(x2 === 5 ? 1 : 2));
+			for (var x3 = 1; x3 <= 4; ++x3)
+				k(xx1x2 + 0.002 * x3, tick_scale(4));
+		}
+	}
+	k(.1 * Math.PI, tick_scale(0));
+	cc.font = tick_scale(1) + FONT;
+	cc.fillText("\u03c0", CANVAS_SCALE, d(tick_scale(1)) - radius);
+	k(.1 * Math.E, tick_scale(0));
+	cc.fillText("e", CANVAS_SCALE, d(tick_scale(1)) - radius);
+	cc.stroke();
+	cc.setTransform(1, 0, 0, 1, 0, 0);
+}
+
 function draw_outer() {
 	cc.fillStyle = COLOUR_BACKGROUND;
 	cc.fillRect(0, 0, canvas_dimension, canvas_dimension);
@@ -303,6 +352,7 @@ function draw_outer() {
 	cc.strokeStyle = "#888";
 	cc.arc(canvas_centre, canvas_centre, canvas_centre, 0, PI2);
 	cc.stroke();
+	draw_scale_log(false);
 	draw_scale_main(false);
 	slide_radius = stack_radius;
 	outer_tag = document.createElement("img");
@@ -314,6 +364,7 @@ function draw_outer() {
 function draw_inner() {
 	cc.clearRect(0, 0, canvas_tag.width, canvas_tag.height);
 	draw_scale_main(true);
+	draw_scale_log(true);
 	draw_scale_exp();
 	inner_tag = document.createElement("img");
 	inner_tag.id = "inner";
