@@ -41,6 +41,7 @@ if (!cc)
 var main_dimension, main_centre;
 var canvas_dimension, canvas_centre;
 var outer_tag, inner_tag, cursor_tag;
+var cursor_label;
 var stack_radius;
 var slide_radius;
 var inner_angle = 0;
@@ -83,6 +84,7 @@ function draw_scale_main(upside) {
 	var outer_radius = stack_radius;
 	var inner_radius = outer_radius - 1.5 * tick_scale(0);
 	var radius = upside ? outer_radius : inner_radius;
+	stack_radius = inner_radius;
 	/* helper function */
 	function d(x) {
 		return upside ? +x : -x;
@@ -91,12 +93,15 @@ function draw_scale_main(upside) {
 		return draw_tick_circle(radius, Math.log(x) * I_LN10, d(h));
 	}
 	/* legend */
-	stack_radius = inner_radius;
-	cc.fillStyle = COLOUR_LABEL;
-	cc.font = tick_scale(1) + FONT;
-	cc.textBaseline = "middle";
-	cc.textAlign = "right";
-	cc.fillText("x", canvas_centre - CANVAS_SCALE, canvas_centre - radius + d(tick_scale(1)));
+	cursor_label.push(
+		function () {
+			cc.fillStyle = COLOUR_LABEL;
+			cc.font = tick_scale(1) + FONT;
+			cc.textBaseline = "middle";
+			cc.textAlign = "right";
+			return cc.fillText("x", canvas_centre - CANVAS_SCALE, canvas_centre - radius + d(tick_scale(1)));
+		}
+	);
 	/* circle */
 	cc.strokeStyle = COLOUR_FORWARD;
 	cc.fillStyle = COLOUR_FORWARD;
@@ -104,6 +109,7 @@ function draw_scale_main(upside) {
 	cc.arc(canvas_centre, canvas_centre, radius, 0, PI2);
 	cc.stroke();
 	/* ticks and labels */
+	cc.textBaseline = "middle";
 	cc.textAlign = "left";
 	cc.beginPath();
 	for (var x = 1; x <= 9; ++x) {
@@ -180,11 +186,15 @@ function draw_scale_exp() {
 	}
 	stack_radius -= (SCALE_EXP_ROUNDS + 2) * line_height;
 	/* legend */
-	cc.fillStyle = COLOUR_LABEL;
-	cc.font = tick_scale(1) + FONT;
-	cc.textBaseline = "top";
-	cc.textAlign = "left";
-	cc.fillText("exp(x)", canvas_centre + CANVAS_SCALE, canvas_centre - radius);
+	cursor_label.push(
+		function () {
+			cc.fillStyle = COLOUR_LABEL;
+			cc.font = tick_scale(1) + FONT;
+			cc.textBaseline = "top";
+			cc.textAlign = "right";
+			return cc.fillText("exp(x)", canvas_centre - CANVAS_SCALE, canvas_centre - radius);
+		}
+	);
 	/* ticks and labels */
 	cc.strokeStyle = COLOUR_FORWARD;
 	cc.fillStyle = COLOUR_FORWARD;
@@ -300,6 +310,7 @@ function draw_scale_log(upside) {
 	var outer_radius = stack_radius;
 	var inner_radius = outer_radius - 1.5 * tick_scale(0);
 	var radius = upside ? outer_radius : inner_radius;
+	stack_radius = inner_radius;
 	/* helper function */
 	function d(x) {
 		return upside ? +x : -x;
@@ -308,12 +319,15 @@ function draw_scale_log(upside) {
 		return draw_tick_circle(radius, x, d(h));
 	}
 	/* legend */
-	stack_radius = inner_radius;
-	cc.fillStyle = COLOUR_LABEL;
-	cc.font = tick_scale(1) + FONT;
-	cc.textBaseline = "middle";
-	cc.textAlign = "right";
-	cc.fillText("log(x)", canvas_centre - CANVAS_SCALE, canvas_centre - radius + d(tick_scale(1)));
+	cursor_label.push(
+		function () {
+			cc.fillStyle = COLOUR_LABEL;
+			cc.font = tick_scale(1) + FONT;
+			cc.textBaseline = "middle";
+			cc.textAlign = "right";
+			return cc.fillText("log(x)", canvas_centre - CANVAS_SCALE, canvas_centre - radius + d(tick_scale(1)));
+		}
+	);
 	/* circle */
 	cc.strokeStyle = COLOUR_FORWARD;
 	cc.fillStyle = COLOUR_FORWARD;
@@ -321,6 +335,7 @@ function draw_scale_log(upside) {
 	cc.arc(canvas_centre, canvas_centre, radius, 0, PI2);
 	cc.stroke();
 	/* ticks and labels */
+	cc.textBaseline = "middle";
 	cc.textAlign = "left";
 	cc.beginPath();
 	for (var x1 = 0; x1 <= 9; ++x1) {
@@ -354,7 +369,6 @@ function draw_outer() {
 	cc.stroke();
 	draw_scale_log(false);
 	draw_scale_main(false);
-	slide_radius = stack_radius;
 	outer_tag = document.createElement("img");
 	outer_tag.id = "outer";
 	outer_tag.src = canvas_tag.toDataURL();
@@ -378,16 +392,20 @@ function draw_cursor() {
 	cc.setTransform(1, 0, 0, 1, canvas_centre, canvas_centre);
 	cc.beginPath();
 	cc.fillStyle = "#CCC4";
-	cc.moveTo(0, 0);
+	var r = .03125 * canvas_dimension;
+	cc.moveTo(-r, 0);
 	cc.arc(0, 0, canvas_centre, - PI_2 - CURSOR_WIDTH, - PI_2 + CURSOR_WIDTH);
+	cc.arc(0, 0, r, 0, Math.PI);
 	cc.closePath();
 	cc.fill();
 	cc.beginPath();
 	cc.strokeStyle = "#0008";
 	cc.moveTo(0, 0);
-	cc.lineTo(0, -canvas_centre);
+	cc.lineTo(0, - canvas_centre);
 	cc.stroke();
 	cc.setTransform(1, 0, 0, 1, 0, 0);
+	for (var i = 0; i < cursor_label.length; ++i)
+		call(cursor_label[i]);
 	cursor_tag = document.createElement("img");
 	cursor_tag.id = "cursor";
 	cursor_tag.src = canvas_tag.toDataURL();
@@ -402,8 +420,10 @@ function draw() {
 	canvas_dimension = canvas_centre * 2;
 	canvas_tag.width = canvas_dimension;
 	canvas_tag.height = canvas_dimension;
+	cursor_label = new Array;
 	stack_radius = canvas_centre;
 	draw_outer();
+	slide_radius = stack_radius;
 	draw_inner();
 	draw_cursor();
 	return cc.clearRect(0, 0, canvas_tag.width, canvas_tag.height);
