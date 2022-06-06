@@ -367,7 +367,6 @@ function draw_outer() {
 	cc.strokeStyle = "#888";
 	cc.arc(canvas_centre, canvas_centre, canvas_centre, 0, PI2);
 	cc.stroke();
-	draw_scale_log(false);
 	draw_scale_main(false);
 	outer_tag = document.createElement("img");
 	outer_tag.id = "outer";
