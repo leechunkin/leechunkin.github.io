@@ -452,11 +452,6 @@ function draw_scale_log(upside) {
 				k(xx1x2 + 0.002 * x3, tick_scale(4));
 		}
 	}
-	k(.1 * Math.PI, tick_scale(0));
-	cc.font = tick_scale(1) + FONT;
-	cc.fillText("\u03c0", CANVAS_SCALE, d(tick_scale(1)) - radius);
-	k(.1 * Math.E, tick_scale(0));
-	cc.fillText("e", CANVAS_SCALE, d(tick_scale(1)) - radius);
 	cc.stroke();
 	cc.setTransform(1, 0, 0, 1, 0, 0);
 }
