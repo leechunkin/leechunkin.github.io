@@ -9,6 +9,7 @@ void function(f){
 var FONT = "px serif";
 var CURSOR_WIDTH = .25;
 var COLOUR_BACKGROUND = "#FFF";
+var COLOUR_LINE = "#000";
 var COLOUR_FORWARD = "#008";
 var COLOUR_BACKWARD = "#800";
 var COLOUR_LABEL = "#080";
@@ -106,7 +107,7 @@ function draw_scale_main(upside) {
 		}
 	);
 	/* circle */
-	cc.strokeStyle = COLOUR_FORWARD;
+	cc.strokeStyle = COLOUR_LINE;
 	cc.fillStyle = COLOUR_FORWARD;
 	cc.beginPath();
 	cc.arc(canvas_centre, canvas_centre, radius, 0, PI2);
@@ -177,7 +178,7 @@ function draw_scale_exp10() {
 		}
 	);
 	/* ticks and labels */
-	cc.strokeStyle = COLOUR_FORWARD;
+	cc.strokeStyle = COLOUR_LINE;
 	cc.fillStyle = COLOUR_FORWARD;
 	cc.textBaseline = "middle";
 	cc.textAlign = "left";
@@ -294,7 +295,7 @@ function draw_scale_exp() {
 		}
 	);
 	/* ticks and labels */
-	cc.strokeStyle = COLOUR_FORWARD;
+	cc.strokeStyle = COLOUR_LINE;
 	cc.fillStyle = COLOUR_FORWARD;
 	cc.textBaseline = "middle";
 	cc.textAlign = "left";
@@ -427,7 +428,7 @@ function draw_scale_log(upside) {
 		}
 	);
 	/* circle */
-	cc.strokeStyle = COLOUR_FORWARD;
+	cc.strokeStyle = COLOUR_LINE;
 	cc.fillStyle = COLOUR_FORWARD;
 	cc.beginPath();
 	cc.arc(canvas_centre, canvas_centre, radius, 0, PI2);
