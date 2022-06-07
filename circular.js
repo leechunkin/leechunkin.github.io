@@ -273,21 +273,21 @@ function draw_scale_exp() {
 					cc.font = tick_scale(font_size + 1) + FONT;
 					cc.fillText(x2.toString(), CANVAS_SCALE, y + tick_scale(2));
 				}
-				if (x1 >= 4)
-					k(xx1 + scale * .1 * (x2 - .5), tick_scale(4));
-				else if (x1 >= 2)
-					for (var x3 = 1; x3 <= 4; ++x3)
-						k(xx1 + scale * .1 * (x2 - .2 * x3), tick_scale(4));
-				else
+				if (x1 <= 1)
 					for (var x3 = 1; x3 <= 9; ++x3)
 						k(xx1 + scale * .1 * (x2 - .1 * x3), tick_scale(x3 === 5 ? 3 : 4));
+				else if (x1 <= 3)
+					for (var x3 = 1; x3 <= 4; ++x3)
+						k(xx1 + scale * .1 * (x2 - .2 * x3), tick_scale(4));
+				else if (x1 <= 7)
+					k(xx1 + scale * .1 * (x2 - .5), tick_scale(4));
 			}
 			var y = k(xx1, tick_scale(0));
 			cc.font = tick_scale(font_size) + FONT;
 			cc.fillText(prefix + x1.toString(), CANVAS_SCALE, y + tick_scale(0));
 		}
 	}
-	stack_radius -= (SCALE_EXP_ROUNDS + 2) * line_height;
+	stack_radius -= (SCALE_EXP_ROUNDS + 1) * line_height;
 	/* legend */
 	cursor_label.push(
 		function () {
@@ -295,7 +295,7 @@ function draw_scale_exp() {
 			cc.font = tick_scale(1) + FONT;
 			cc.textBaseline = "middle";
 			cc.textAlign = "left";
-			var y = canvas_centre - radius + (SCALE_EXP_ROUNDS + 1) * line_height + tick_scale(1);
+			var y = canvas_centre - radius + SCALE_EXP_ROUNDS * line_height + tick_scale(1);
 			return cc.fillText("exp(x)", canvas_centre + CANVAS_SCALE, y);
 		}
 	);
@@ -392,7 +392,7 @@ function draw_scale_exp() {
 		cc.font = tick_scale(1) + FONT;
 		cc.fillText(x1.toString(), CANVAS_SCALE, y + tick_scale(0));
 	}
-	for (var i = 1; i <= SCALE_EXP_ROUNDS; ++i)
+	for (var i = 1; i < SCALE_EXP_ROUNDS; ++i)
 		draw_round(Math.pow(.1, i), "1." + "0".repeat(i - 1), i);
 	cc.stroke();
 	cc.beginPath();
@@ -478,7 +478,7 @@ function draw_inner() {
 	cc.clearRect(0, 0, canvas_tag.width, canvas_tag.height);
 	draw_scale_main(true);
 	draw_scale_log(true);
-	draw_scale_exp10();
+	draw_scale_exp();
 	inner_tag = document.createElement("img");
 	inner_tag.id = "inner";
 	inner_tag.src = canvas_tag.toDataURL();
