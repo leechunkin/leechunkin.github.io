@@ -102,8 +102,8 @@ function draw_scale_main(upside) {
 			cc.fillStyle = COLOUR_LABEL;
 			cc.font = tick_scale(1) + FONT;
 			cc.textBaseline = "middle";
-			cc.textAlign = "right";
-			return cc.fillText("x", canvas_centre - CANVAS_SCALE, canvas_centre - radius + d(tick_scale(1)));
+			cc.textAlign = "left";
+			return cc.fillText("x", canvas_centre + CANVAS_SCALE, canvas_centre - radius + d(tick_scale(1)));
 		}
 	);
 	/* circle */
@@ -172,9 +172,9 @@ function draw_scale_exp10() {
 			cc.fillStyle = COLOUR_LABEL;
 			cc.font = tick_scale(1) + FONT;
 			cc.textBaseline = "middle";
-			cc.textAlign = "right";
+			cc.textAlign = "left";
 			var y = canvas_centre - radius + SCALE_EXP_ROUNDS * line_height + tick_scale(1);
-			return cc.fillText("exp10(x)", canvas_centre - CANVAS_SCALE, y);
+			return cc.fillText("exp10(x)", canvas_centre + CANVAS_SCALE, y);
 		}
 	);
 	/* ticks and labels */
@@ -289,9 +289,9 @@ function draw_scale_exp() {
 			cc.fillStyle = COLOUR_LABEL;
 			cc.font = tick_scale(1) + FONT;
 			cc.textBaseline = "middle";
-			cc.textAlign = "right";
+			cc.textAlign = "left";
 			var y = canvas_centre - radius + (SCALE_EXP_ROUNDS + 1) * line_height + tick_scale(1);
-			return cc.fillText("exp(x)", canvas_centre - CANVAS_SCALE, y);
+			return cc.fillText("exp(x)", canvas_centre + CANVAS_SCALE, y);
 		}
 	);
 	/* ticks and labels */
@@ -423,8 +423,8 @@ function draw_scale_log(upside) {
 			cc.fillStyle = COLOUR_LABEL;
 			cc.font = tick_scale(1) + FONT;
 			cc.textBaseline = "middle";
-			cc.textAlign = "right";
-			return cc.fillText("log(x)", canvas_centre - CANVAS_SCALE, canvas_centre - radius + d(tick_scale(1)));
+			cc.textAlign = "left";
+			return cc.fillText("log(x)", canvas_centre + CANVAS_SCALE, canvas_centre - radius + d(tick_scale(1)));
 		}
 	);
 	/* circle */
@@ -512,7 +512,7 @@ function draw_cursor() {
 function draw() {
 	main_dimension = Math.min(window.innerWidth, window.innerHeight) - 2;
 	main_centre = main_dimension / 2;
-	canvas_centre = main_centre * CANVAS_SCALE;
+	canvas_centre = Math.round(main_centre * CANVAS_SCALE);
 	canvas_dimension = canvas_centre * 2;
 	canvas_tag.width = canvas_dimension;
 	canvas_tag.height = canvas_dimension;
