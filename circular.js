@@ -6,13 +6,18 @@ void function(f){
 }(function () {
 "use strict";
 
+var dark_mode = window.matchMedia('(prefers-color-scheme: dark)');
+console.log("dark_mode", dark_mode);
+dark_mode = dark_mode && dark_mode.matches;
+
 var FONT = "px serif";
 var CURSOR_WIDTH = .25;
-var COLOUR_BACKGROUND = "#FFF";
-var COLOUR_LINE = "#000";
-var COLOUR_FORWARD = "#008";
-var COLOUR_BACKWARD = "#800";
-var COLOUR_LABEL = "#080";
+var COLOUR_LINE = dark_mode ? "#FFF" : "#000";
+var COLOUR_FORWARD = dark_mode ? "#8F8" : "#00C";
+var COLOUR_BACKWARD = dark_mode ? "#F88" : "#C00";
+var COLOUR_LABEL = dark_mode ? "#88F" : "#0C0";
+var COLOUR_CURSOR_BOARD =  dark_mode ? "#6664" : "#CCC4";
+var COLOUR_CURSOR_LINE =  dark_mode ? "#FFF8" : "#0008";
 var CANVAS_SCALE = .5 * (Math.sqrt(5) + 1);
 var SCALE_EXP_ROUNDS = 3;
 var TICK_SCALE_CONSTANT = .03125 * CANVAS_SCALE;
@@ -458,8 +463,6 @@ function draw_scale_log(upside) {
 }
 
 function draw_outer() {
-	cc.fillStyle = COLOUR_BACKGROUND;
-	cc.fillRect(0, 0, canvas_dimension, canvas_dimension);
 	cc.beginPath();
 	cc.strokeStyle = "#888";
 	cc.arc(canvas_centre, canvas_centre, canvas_centre, 0, PI2);
@@ -487,7 +490,7 @@ function draw_cursor() {
 	cc.clearRect(0, 0, canvas_tag.width, canvas_tag.height);
 	cc.setTransform(1, 0, 0, 1, canvas_centre, canvas_centre);
 	cc.beginPath();
-	cc.fillStyle = "#CCC4";
+	cc.fillStyle = COLOUR_CURSOR_BOARD;
 	var r = .0625 * canvas_dimension;
 	cc.moveTo(-r, 0);
 	cc.arc(0, 0, canvas_centre, - PI_2 - CURSOR_WIDTH, - PI_2 + CURSOR_WIDTH);
@@ -495,7 +498,7 @@ function draw_cursor() {
 	cc.closePath();
 	cc.fill();
 	cc.beginPath();
-	cc.strokeStyle = "#0008";
+	cc.strokeStyle = COLOUR_CURSOR_LINE;
 	cc.moveTo(0, 0);
 	cc.lineTo(0, - canvas_centre);
 	cc.stroke();
