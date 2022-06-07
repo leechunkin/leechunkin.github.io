@@ -12,8 +12,9 @@ var COLOUR_BACKGROUND = "#FFF";
 var COLOUR_FORWARD = "#008";
 var COLOUR_BACKWARD = "#800";
 var COLOUR_LABEL = "#080";
-var CANVAS_SCALE = 2;
+var CANVAS_SCALE = .5 * (Math.sqrt(5) + 1);
 var SCALE_EXP_ROUNDS = 3;
+var TICK_SCALE_CONSTANT = .03125 * CANVAS_SCALE;
 
 function apply(func, thisArg, args) {
 	return func.apply(thisArg, args);
@@ -37,6 +38,8 @@ if (!cc)
 			return document.body.appendChild(p);
 		}
 	);
+//	cc.imageSmoothingEnabled = true;
+//	cc.imageSmoothingQuality = "high";
 
 var main_dimension, main_centre;
 var canvas_dimension, canvas_centre;
@@ -50,7 +53,7 @@ var cursor_angle = 0;
 function tick_scale(n) {
 	var v = tick_scale.memoize.get(n);
 	if (typeof value === "undefined") {
-		var v = Math.round(.0625 * main_dimension * Math.pow(.5, .5 * n));
+		var v = Math.round(TICK_SCALE_CONSTANT * main_dimension * Math.pow(.5, .5 * n));
 		tick_scale.memoize.set(n, v);
 	}
 	return v;
@@ -513,6 +516,7 @@ function draw() {
 	canvas_tag.height = canvas_dimension;
 	cursor_label = new Array;
 	stack_radius = canvas_centre;
+	cc.lineWidth = CANVAS_SCALE;
 	draw_outer();
 	slide_radius = stack_radius;
 	draw_inner();
