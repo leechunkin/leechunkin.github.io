@@ -152,6 +152,97 @@ function draw_scale_main(upside) {
 	cc.setTransform(1, 0, 0, 1, 0, 0);
 }
 
+function draw_scale_exp10() {
+	var line_height = 1.5 * tick_scale(0);
+	var radius = stack_radius;
+	var axis_points = new Array;
+	function k(x, h) {
+		var ll = Math.log(Math.log(x) * I_LN10) * I_LN10;
+		axis_points.push(ll);
+		return draw_tick_spiral(radius, line_height, ll, h);
+	}
+	stack_radius -= (SCALE_EXP_ROUNDS + 1) * line_height;
+	/* legend */
+	cursor_label.push(
+		function () {
+			cc.fillStyle = COLOUR_LABEL;
+			cc.font = tick_scale(1) + FONT;
+			cc.textBaseline = "middle";
+			cc.textAlign = "right";
+			var y = canvas_centre - radius + SCALE_EXP_ROUNDS * line_height + tick_scale(1);
+			return cc.fillText("exp10(x)", canvas_centre - CANVAS_SCALE, y);
+		}
+	);
+	/* ticks and labels */
+	cc.strokeStyle = COLOUR_FORWARD;
+	cc.fillStyle = COLOUR_FORWARD;
+	cc.textBaseline = "middle";
+	cc.textAlign = "left";
+	cc.setTransform(1, 0, 0, 1, canvas_centre, canvas_centre);
+	cc.beginPath();
+	var y = k(10, tick_scale(0));
+	cc.font = tick_scale(0) + FONT;
+	cc.fillText("10", CANVAS_SCALE, y + tick_scale(0));
+	for (var x1 = 9; x1 >= 2; --x1) {
+		for (var x2 = 10; x2 >= 1; --x2) {
+			var y = k(x1 + .1 * x2, tick_scale(x2 === 5 ? 1 : 2));
+			if (x1 === 2 && x2 < 10) {
+				cc.font = tick_scale(2) + FONT;
+				cc.fillText(x2.toString(), CANVAS_SCALE, y + tick_scale(2));
+			}
+			if (x1 < 3 && x2 < 5)
+				for (var x3 = 1; x3 <= 9; ++x3)
+					k(x1 + .1 * (x2 - .1 * x3), tick_scale(x3 === 5 ? 3 : 4));
+			else if (x1 < 4)
+				for (var x3 = 1; x3 <= 4; ++x3)
+					k(x1 + .1 * (x2 - .2 * x3), tick_scale(4));
+			else if (x1 < 6)
+				k(x1 + .1 * (x2 - .5), tick_scale(4));
+		}
+		var y = k(x1, tick_scale(0));
+		cc.font = tick_scale(0) + FONT;
+		cc.fillText(x1.toString(), CANVAS_SCALE, y + tick_scale(0));
+	}
+	for (var round = 1; round <= SCALE_EXP_ROUNDS; ++round) {
+		var scale = Math.pow(.1, round);
+		var prefix = "1." + "0".repeat(round - 1);
+		for (var x1 = 9; x1 >= (round === SCALE_EXP_ROUNDS ? 2 : 1); --x1) {
+			var xx1 = 1 + scale * x1;
+			for (var x2 = 10; x2 >= 1; --x2) {
+				var y = k(xx1 + scale * .1 * x2, tick_scale(x2 === 5 ? 1 : 2));
+				if (x1 === 1 && x2 < 10) {
+					cc.font = tick_scale(round + 1) + FONT;
+					cc.fillText(x2.toString(), CANVAS_SCALE, y + tick_scale(2));
+				}
+				if (x1 >= 4)
+					k(xx1 + scale * .1 * (x2 - .5), tick_scale(4));
+				else if (x1 >= 2)
+					for (var x3 = 1; x3 <= 4; ++x3)
+						k(xx1 + scale * .1 * (x2 - .2 * x3), tick_scale(4));
+				else
+					for (var x3 = 1; x3 <= 9; ++x3)
+						k(xx1 + scale * .1 * (x2 - .1 * x3), tick_scale(x3 === 5 ? 3 : 4));
+			}
+			var y = k(xx1, tick_scale(0));
+			cc.font = tick_scale(round) + FONT;
+			cc.fillText(prefix + x1.toString(), CANVAS_SCALE, y + tick_scale(0));
+		}
+	}
+	cc.stroke();
+	cc.beginPath();
+	cc.setTransform(1, 0, 0, 1, canvas_centre, canvas_centre);
+	cc.rotate(PI2_LN10 * Math.log(Math.log(20000)));
+	cc.moveTo(0, - radius);
+	for (var i = 0; i < axis_points.length; ++i) {
+		var ll = axis_points[i];
+		cc.setTransform(1, 0, 0, 1, canvas_centre, canvas_centre);
+		cc.rotate(PI2 * ll);
+		cc.lineTo(0, - radius - ll * line_height);
+	}
+	cc.stroke();
+	return cc.setTransform(1, 0, 0, 1, 0, 0);
+}
+
 function draw_scale_exp() {
 	var line_height = 1.5 * tick_scale(0);
 	var radius = stack_radius;
@@ -379,7 +470,7 @@ function draw_inner() {
 	cc.clearRect(0, 0, canvas_tag.width, canvas_tag.height);
 	draw_scale_main(true);
 	draw_scale_log(true);
-	draw_scale_exp();
+	draw_scale_exp10();
 	inner_tag = document.createElement("img");
 	inner_tag.id = "inner";
 	inner_tag.src = canvas_tag.toDataURL();
