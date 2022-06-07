@@ -462,12 +462,12 @@ function pointermove(event) {
 	if (inner_drag !== null) {
 		event.preventDefault();
 		var a = pointer_angle(event.pageX, event.pageY) - inner_drag;
-		inner_tag.style.rotate = (inner_angle + a).toString() + "rad";
+		inner_tag.style.transform = "rotate(" + (inner_angle + a).toString() + "rad)";
 	}
 	if (cursor_drag !== null) {
 		event.preventDefault();
 		var a = pointer_angle(event.pageX, event.pageY) - cursor_drag;
-		cursor_tag.style.rotate = (cursor_angle + a).toString() + "rad";
+		cursor_tag.style.transform = "rotate(" + (cursor_angle + a).toString() + "rad)";
 	}
 }
 
@@ -475,13 +475,13 @@ function pointerup(event) {
 	if (inner_drag !== null) {
 		event.preventDefault();
 		inner_angle += pointer_angle(event.pageX, event.pageY) - inner_drag;
-		inner_tag.style.rotate = inner_angle.toString() + "rad";
+		inner_tag.style.transform = "rotate(" + inner_angle.toString() + "rad)";
 		inner_drag = null;
 	}
 	if (cursor_drag !== null) {
 		event.preventDefault();
 		cursor_angle += pointer_angle(event.pageX, event.pageY) - cursor_drag;
-		cursor_tag.style.rotate = cursor_angle.toString() + "rad";
+		cursor_tag.style.transform = "rotate(" + cursor_angle.toString() + "rad)";
 		cursor_drag = null;
 	}
 }
