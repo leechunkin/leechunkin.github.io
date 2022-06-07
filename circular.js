@@ -242,9 +242,6 @@ function draw_scale_exp10() {
 		cc.rotate(PI2 * ll);
 		cc.lineTo(0, - radius - ll * line_height);
 	}
-	var y = draw_tick_spiral(radius, line_height, Math.log(Math.log(Math.PI) * I_LN10) * I_LN10, tick_scale(0));
-	cc.font = tick_scale(1) + FONT;
-	cc.fillText("\u03c0", CANVAS_SCALE, y + tick_scale(1));
 	var y = draw_tick_spiral(radius, line_height, Math.log(Math.log(Math.E) * I_LN10) * I_LN10, tick_scale(0));
 	cc.font = tick_scale(1) + FONT;
 	cc.fillText("e", CANVAS_SCALE, y + tick_scale(1));
@@ -452,6 +449,9 @@ function draw_scale_log(upside) {
 				k(xx1x2 + 0.002 * x3, tick_scale(4));
 		}
 	}
+	k(1 / Math.PI, tick_scale(0));
+	cc.font = tick_scale(1) + FONT;
+	cc.fillText("1/\u03c0", CANVAS_SCALE, d(tick_scale(1)) - radius);
 	cc.stroke();
 	cc.setTransform(1, 0, 0, 1, 0, 0);
 }
