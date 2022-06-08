@@ -4,6 +4,7 @@ html, body, #canvas, #outer, #inner, #cursor {
 
 body {
 	margin: 0;
+	background-color: #FFF;
 	overflow: hidden;
 }
 
@@ -31,12 +32,6 @@ canvas {
 
 #cursor {
 	z-index: 1;
-}
-
-@media (prefers-color-scheme: light) {
-	body {
-		background-color: #FFF;
-	}
 }
 
 @media (prefers-color-scheme: dark) {

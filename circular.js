@@ -7,7 +7,6 @@ void function(f){
 "use strict";
 
 var dark_mode = window.matchMedia('(prefers-color-scheme: dark)');
-console.log("dark_mode", dark_mode);
 dark_mode = dark_mode && dark_mode.matches;
 
 var FONT = "px serif";
@@ -77,6 +76,21 @@ function draw_tick_circle(r, x, h) {
 	cc.rotate(PI2 * x);
 	cc.moveTo(0, - r);
 	return cc.lineTo(0, - r + h);
+}
+
+function draw_spiral(r, dr, x0, x1, dx) {
+	cc.setTransform(1, 0, 0, 1, canvas_centre, canvas_centre);
+	cc.rotate(PI2 * x0);
+	cc.moveTo(0, - r);
+	var x = x0;
+	while ((x += dx) < x1) {
+		cc.setTransform(1, 0, 0, 1, canvas_centre, canvas_centre);
+		cc.rotate(- PI2 * x);
+		cc.lineTo(0, - r + x * dr);
+	}
+	cc.setTransform(1, 0, 0, 1, canvas_centre, canvas_centre);
+	cc.rotate(- PI2 * x1);
+	cc.lineTo(0, - r + x1 * dr);
 }
 
 function draw_tick_spiral(r, dr, x, h) {
@@ -164,11 +178,8 @@ function draw_scale_main(upside) {
 function draw_scale_exp10() {
 	var line_height = 1.5 * tick_scale(0);
 	var radius = stack_radius;
-	var axis_points = new Array;
 	function k(x, h) {
-		var ll = Math.log(Math.log(x) * I_LN10) * I_LN10;
-		axis_points.push(ll);
-		return draw_tick_spiral(radius, line_height, ll, h);
+		return draw_tick_spiral(radius, line_height, Math.log(Math.log(x) * I_LN10) * I_LN10, h);
 	}
 	stack_radius -= (SCALE_EXP_ROUNDS + 1) * line_height;
 	/* legend */
@@ -182,6 +193,14 @@ function draw_scale_exp10() {
 			return cc.fillText("exp10(x)", canvas_centre + CANVAS_SCALE, y);
 		}
 	);
+	/* spiral */
+	cc.beginPath();
+	draw_spiral(
+		radius, line_height,
+		0, - Math.log(Math.log(1 + 2 * Math.pow(.1, SCALE_EXP_ROUNDS)) * I_LN10) * I_LN10,
+		0.0078125
+	);
+	cc.stroke();
 	/* ticks and labels */
 	cc.strokeStyle = COLOUR_LINE;
 	cc.fillStyle = COLOUR_FORWARD;
@@ -238,31 +257,14 @@ function draw_scale_exp10() {
 		}
 	}
 	cc.stroke();
-	cc.beginPath();
-	cc.setTransform(1, 0, 0, 1, canvas_centre, canvas_centre);
-	cc.rotate(PI2_LN10 * Math.log(Math.log(20000)));
-	cc.moveTo(0, - radius);
-	for (var i = 0; i < axis_points.length; ++i) {
-		var ll = axis_points[i];
-		cc.setTransform(1, 0, 0, 1, canvas_centre, canvas_centre);
-		cc.rotate(PI2 * ll);
-		cc.lineTo(0, - radius - ll * line_height);
-	}
-	var y = draw_tick_spiral(radius, line_height, Math.log(Math.log(Math.E) * I_LN10) * I_LN10, tick_scale(0));
-	cc.font = tick_scale(1) + FONT;
-	cc.fillText("e", CANVAS_SCALE, y + tick_scale(1));
-	cc.stroke();
 	return cc.setTransform(1, 0, 0, 1, 0, 0);
 }
 
 function draw_scale_exp() {
 	var line_height = 1.5 * tick_scale(0);
 	var radius = stack_radius;
-	var axis_points = new Array;
 	function k(x, h) {
-		var ll = Math.log(Math.log(x)) * I_LN10 - 1;
-		axis_points.push(ll);
-		return draw_tick_spiral(radius, line_height, ll, h);
+		return draw_tick_spiral(radius, line_height, Math.log(Math.log(x)) * I_LN10 - 1, h);
 	}
 	function draw_round(scale, prefix, font_size) {
 		for (var x1 = 9; x1 >= 1; --x1) {
@@ -295,10 +297,19 @@ function draw_scale_exp() {
 			cc.font = tick_scale(1) + FONT;
 			cc.textBaseline = "middle";
 			cc.textAlign = "left";
-			var y = canvas_centre - radius + SCALE_EXP_ROUNDS * line_height + tick_scale(1);
+			var y = canvas_centre - radius + tick_scale(1);
 			return cc.fillText("exp(x)", canvas_centre + CANVAS_SCALE, y);
 		}
 	);
+	/* spiral */
+	cc.beginPath();
+	draw_spiral(
+		radius, line_height,
+		Math.log(Math.log(20000)) * I_LN10 - 1,
+		1 - Math.log(Math.log(1 + Math.pow(.1, SCALE_EXP_ROUNDS - 1))) * I_LN10,
+		0.0078125
+	);
+	cc.stroke();
 	/* ticks and labels */
 	cc.strokeStyle = COLOUR_LINE;
 	cc.fillStyle = COLOUR_FORWARD;
@@ -394,17 +405,6 @@ function draw_scale_exp() {
 	}
 	for (var i = 1; i < SCALE_EXP_ROUNDS; ++i)
 		draw_round(Math.pow(.1, i), "1." + "0".repeat(i - 1), i);
-	cc.stroke();
-	cc.beginPath();
-	cc.setTransform(1, 0, 0, 1, canvas_centre, canvas_centre);
-	cc.rotate(PI2_LN10 * Math.log(Math.log(20000)));
-	cc.moveTo(0, - radius);
-	for (var i = 0; i < axis_points.length; ++i) {
-		var ll = axis_points[i];
-		cc.setTransform(1, 0, 0, 1, canvas_centre, canvas_centre);
-		cc.rotate(PI2 * ll);
-		cc.lineTo(0, - radius - ll * line_height);
-	}
 	cc.stroke();
 	return cc.setTransform(1, 0, 0, 1, 0, 0);
 }
