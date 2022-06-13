@@ -6,7 +6,7 @@ void function(f){
 }(function () {
 "use strict";
 
-var dark_mode = window.matchMedia('(prefers-color-scheme: dark)');
+var dark_mode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
 dark_mode = dark_mode && dark_mode.matches;
 
 var FONT = "px serif";
@@ -30,6 +30,7 @@ function call(func, thisArg, ...args) {
 }
 
 var main_tag = document.getElementsByTagName("main").item(0);
+var type_tags = document.querySelectorAll("input[type='radio'][name='type']");
 var canvas_tag = document.createElement("canvas");
 canvas_tag.hidden = true;
 //	main_tag.appendChild(canvas_tag);
@@ -48,6 +49,7 @@ if (!cc)
 
 var main_dimension, main_centre;
 var canvas_dimension, canvas_centre;
+var outer_scales, inner_scales;
 var outer_tag, inner_tag, cursor_tag;
 var cursor_label;
 var stack_radius;
@@ -467,7 +469,8 @@ function draw_outer() {
 	cc.strokeStyle = "#888";
 	cc.arc(canvas_centre, canvas_centre, canvas_centre, 0, PI2);
 	cc.stroke();
-	draw_scale_main(false);
+	for (var i = 0; i < outer_scales.length; ++i)
+		outer_scales[i](false);
 	outer_tag = document.createElement("img");
 	outer_tag.id = "outer";
 	outer_tag.src = canvas_tag.toDataURL();
@@ -476,9 +479,8 @@ function draw_outer() {
 
 function draw_inner() {
 	cc.clearRect(0, 0, canvas_tag.width, canvas_tag.height);
-	draw_scale_main(true);
-	draw_scale_log(true);
-	draw_scale_exp();
+	for (var i = 0; i < inner_scales.length; ++i)
+		inner_scales[i](true);
 	inner_tag = document.createElement("img");
 	inner_tag.id = "inner";
 	inner_tag.src = canvas_tag.toDataURL();
@@ -529,14 +531,57 @@ function draw() {
 	return cc.clearRect(0, 0, canvas_tag.width, canvas_tag.height);
 }
 
-function resize() {
+function redraw() {
 	main_tag.removeChild(cursor_tag);
 	main_tag.removeChild(outer_tag);
 	main_tag.removeChild(inner_tag);
 	return draw();
 }
 
-window.addEventListener("resize", resize);
+call(
+	function () {
+		var mapping = new Map(
+			[
+				[
+					"D/C,L,LLe",
+					function () {
+						outer_scales = [draw_scale_main];
+						inner_scales = [draw_scale_main, draw_scale_log, draw_scale_exp];
+					}
+				],
+				[
+					"L/L,C,LLx",
+					function () {
+						outer_scales = [draw_scale_log];
+						inner_scales = [draw_scale_log, draw_scale_main, draw_scale_exp10];
+					}
+				]
+			]
+		);
+		mapping.get("D/C,L,LLe")(); /* default */
+		for (var i = 0; i < type_tags.length; ++i) {
+			var type_tag = type_tags[i];
+			var f = mapping.get(type_tag.value);
+			type_tag.addEventListener(
+				"change",
+				call(
+					function (set_scales) {
+						return function (event) {
+							if (!event.target.checked) return;
+							set_scales();
+							redraw();
+						};
+					},
+					null,
+					f
+				)
+			);
+			if (type_tag.checked) call(f);
+		}
+	}
+);
+
+window.addEventListener("resize", redraw);
 draw();
 
 var inner_drag = null;

@@ -34,6 +34,17 @@ canvas {
 	z-index: 1;
 }
 
+details {
+	position: fixed;
+	right: 2ex;
+	bottom: 2ex;
+	z-index: 9;
+}
+
+summary {
+	cursor: pointer;
+}
+
 @media (prefers-color-scheme: dark) {
 	body {
 		background-color: #000;
