@@ -39,6 +39,7 @@ details {
 	right: 2ex;
 	bottom: 2ex;
 	z-index: 9;
+	font-size: min(4vw, 17vh);
 }
 
 summary {
@@ -48,5 +49,6 @@ summary {
 @media (prefers-color-scheme: dark) {
 	body {
 		background-color: #000;
+		color: #FFF;
 	}
 }

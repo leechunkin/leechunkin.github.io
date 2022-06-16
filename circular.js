@@ -29,6 +29,12 @@ function call(func, thisArg, ...args) {
 	return apply(func, thisArg, args);
 }
 
+function negate(func) {
+	return function (x) {
+		return func(!x);
+	}
+}
+
 var main_tag = document.getElementsByTagName("main").item(0);
 var type_tags = document.querySelectorAll("input[type='radio'][name='type']");
 var canvas_tag = document.createElement("canvas");
@@ -177,13 +183,92 @@ function draw_scale_main(upside) {
 	cc.setTransform(1, 0, 0, 1, 0, 0);
 }
 
-function draw_scale_exp10() {
-	var line_height = 1.5 * tick_scale(0);
-	var radius = stack_radius;
-	function k(x, h) {
-		return draw_tick_spiral(radius, line_height, Math.log(Math.log(x) * I_LN10) * I_LN10, h);
+function draw_scale_invert(upside) {
+	/* radii */
+	var outer_radius = stack_radius;
+	var inner_radius = outer_radius - 1.5 * tick_scale(0);
+	var radius = upside ? outer_radius : inner_radius;
+	stack_radius = inner_radius;
+	/* helper function */
+	function d(x) {
+		return upside ? +x : -x;
 	}
-	stack_radius -= (SCALE_EXP_ROUNDS + 1) * line_height;
+	function k(x, h) {
+		return draw_tick_circle(radius, - Math.log(x) * I_LN10, d(h));
+	}
+	/* legend */
+	cursor_label.push(
+		function () {
+			cc.fillStyle = COLOUR_LABEL;
+			cc.font = tick_scale(1) + FONT;
+			cc.textBaseline = "middle";
+			cc.textAlign = "right";
+			return cc.fillText("1/x", canvas_centre - CANVAS_SCALE, canvas_centre - radius + d(tick_scale(1)));
+		}
+	);
+	/* circle */
+	cc.strokeStyle = COLOUR_LINE;
+	cc.fillStyle = COLOUR_BACKWARD;
+	cc.beginPath();
+	cc.arc(canvas_centre, canvas_centre, radius, 0, PI2);
+	cc.stroke();
+	/* ticks and labels */
+	cc.textBaseline = "middle";
+	cc.textAlign = "right";
+	cc.beginPath();
+	for (var x = 1; x <= 9; ++x) {
+		k(x, tick_scale(0));
+		cc.font = tick_scale(0) + FONT;
+		cc.fillText(x.toString(), - CANVAS_SCALE, d(tick_scale(0)) - radius);
+		for (var x1 = 0; x1 <= 9; ++x1) {
+			var xx1 = x + .1 * x1;
+			if (x1 > 0) {
+				k(xx1, tick_scale(x1 === 5 ? 1 : 2));
+				if (x < 5) {
+					cc.font = tick_scale(2).toString() + FONT;
+					cc.fillText(x1.toString(), - CANVAS_SCALE, d(tick_scale(2)) - radius);
+				}
+			}
+			if (x < 2)
+				for (var x2 = 0; x2 <= 9; ++x2) {
+					var xx1x2 = xx1 + .01 * x2;
+					if (x2 > 0)
+						k(xx1x2, tick_scale(x2 === 5 ? 3 : 4));
+					if (x1 < 5)
+						k(xx1x2 + .005, tick_scale(6));
+				}
+			else if (x < 3)
+				for (var x2 = 1; x2 <= 9; ++x2)
+					k(xx1 + .01 * x2, tick_scale(x2 === 5 ? 3 : 4));
+			else if (x < 6)
+				for (var x2 = 1; x2 <= 4; ++x2)
+					k(xx1 + .02 * x2, tick_scale(4));
+			else
+				k(xx1 + .05, tick_scale(4));
+		}
+	}
+	k(Math.PI, tick_scale(0));
+	cc.font = tick_scale(1) + FONT;
+	cc.fillText("\u03c0", CANVAS_SCALE, d(tick_scale(1)) - radius);
+	k(Math.E, tick_scale(0));
+	cc.fillText("e", CANVAS_SCALE, d(tick_scale(1)) - radius);
+	cc.stroke();
+	cc.setTransform(1, 0, 0, 1, 0, 0);
+}
+
+function draw_scale_log(upside) {
+	/* radii */
+	var outer_radius = stack_radius;
+	var inner_radius = outer_radius - 1.5 * tick_scale(0);
+	var radius = upside ? outer_radius : inner_radius;
+	stack_radius = inner_radius;
+	/* helper function */
+	function d(x) {
+		return upside ? +x : -x;
+	}
+	function k(x, h) {
+		return draw_tick_circle(radius, x, d(h));
+	}
 	/* legend */
 	cursor_label.push(
 		function () {
@@ -191,75 +276,174 @@ function draw_scale_exp10() {
 			cc.font = tick_scale(1) + FONT;
 			cc.textBaseline = "middle";
 			cc.textAlign = "left";
-			var y = canvas_centre - radius + SCALE_EXP_ROUNDS * line_height + tick_scale(1);
-			return cc.fillText("exp10(x)", canvas_centre + CANVAS_SCALE, y);
+			return cc.fillText("log(x)", canvas_centre + CANVAS_SCALE, canvas_centre - radius + d(tick_scale(1)));
 		}
 	);
-	/* spiral */
-	cc.beginPath();
-	draw_spiral(
-		radius, line_height,
-		0, - Math.log(Math.log(1 + 2 * Math.pow(.1, SCALE_EXP_ROUNDS)) * I_LN10) * I_LN10,
-		0.0078125
-	);
-	cc.stroke();
-	/* ticks and labels */
+	/* circle */
 	cc.strokeStyle = COLOUR_LINE;
 	cc.fillStyle = COLOUR_FORWARD;
+	cc.beginPath();
+	cc.arc(canvas_centre, canvas_centre, radius, 0, PI2);
+	cc.stroke();
+	/* ticks and labels */
 	cc.textBaseline = "middle";
 	cc.textAlign = "left";
-	cc.setTransform(1, 0, 0, 1, canvas_centre, canvas_centre);
 	cc.beginPath();
-	var y = k(10, tick_scale(0));
-	cc.font = tick_scale(0) + FONT;
-	cc.fillText("10", CANVAS_SCALE, y + tick_scale(0));
-	for (var x1 = 9; x1 >= 2; --x1) {
-		for (var x2 = 10; x2 >= 1; --x2) {
-			var y = k(x1 + .1 * x2, tick_scale(x2 === 5 ? 1 : 2));
-			if (x1 === 2 && x2 < 10) {
-				cc.font = tick_scale(2) + FONT;
-				cc.fillText(x2.toString(), CANVAS_SCALE, y + tick_scale(2));
-			}
-			if (x1 < 3 && x2 < 5)
-				for (var x3 = 1; x3 <= 9; ++x3)
-					k(x1 + .1 * (x2 - .1 * x3), tick_scale(x3 === 5 ? 3 : 4));
-			else if (x1 < 4)
-				for (var x3 = 1; x3 <= 4; ++x3)
-					k(x1 + .1 * (x2 - .2 * x3), tick_scale(4));
-			else if (x1 < 6)
-				k(x1 + .1 * (x2 - .5), tick_scale(4));
-		}
-		var y = k(x1, tick_scale(0));
+	for (var x1 = 0; x1 <= 9; ++x1) {
+		var xx1 = .1 * x1;
+		k(xx1, tick_scale(0));
 		cc.font = tick_scale(0) + FONT;
-		cc.fillText(x1.toString(), CANVAS_SCALE, y + tick_scale(0));
-	}
-	for (var round = 1; round <= SCALE_EXP_ROUNDS; ++round) {
-		var scale = Math.pow(.1, round);
-		var prefix = "1." + "0".repeat(round - 1);
-		for (var x1 = 9; x1 >= (round === SCALE_EXP_ROUNDS ? 2 : 1); --x1) {
-			var xx1 = 1 + scale * x1;
-			for (var x2 = 10; x2 >= 1; --x2) {
-				var y = k(xx1 + scale * .1 * x2, tick_scale(x2 === 5 ? 1 : 2));
-				if (x1 === 1 && x2 < 10) {
-					cc.font = tick_scale(round + 1) + FONT;
-					cc.fillText(x2.toString(), CANVAS_SCALE, y + tick_scale(2));
-				}
-				if (x1 >= 4)
-					k(xx1 + scale * .1 * (x2 - .5), tick_scale(4));
-				else if (x1 >= 2)
-					for (var x3 = 1; x3 <= 4; ++x3)
-						k(xx1 + scale * .1 * (x2 - .2 * x3), tick_scale(4));
-				else
-					for (var x3 = 1; x3 <= 9; ++x3)
-						k(xx1 + scale * .1 * (x2 - .1 * x3), tick_scale(x3 === 5 ? 3 : 4));
-			}
-			var y = k(xx1, tick_scale(0));
-			cc.font = tick_scale(round) + FONT;
-			cc.fillText(prefix + x1.toString(), CANVAS_SCALE, y + tick_scale(0));
+		cc.fillText(x1.toString(), CANVAS_SCALE, d(tick_scale(0)) - radius);
+		for (var x2 = 0; x2 <= 9; ++x2) {
+			var xx1x2 = xx1 + .01 * x2;
+			if (x2 > 0)
+				k(xx1x2, tick_scale(x2 === 5 ? 1 : 2));
+			for (var x3 = 1; x3 <= 4; ++x3)
+				k(xx1x2 + 0.002 * x3, tick_scale(4));
 		}
 	}
+	k(1 / Math.PI, tick_scale(0));
+	cc.font = tick_scale(1) + FONT;
+	cc.fillText("1/\u03c0", CANVAS_SCALE, d(tick_scale(1)) - radius);
 	cc.stroke();
-	return cc.setTransform(1, 0, 0, 1, 0, 0);
+	cc.setTransform(1, 0, 0, 1, 0, 0);
+}
+
+function draw_scale_square(upside) {
+	/* radii */
+	var outer_radius = stack_radius;
+	var inner_radius = outer_radius - 1.5 * tick_scale(0);
+	var radius = upside ? outer_radius : inner_radius;
+	stack_radius = inner_radius;
+	/* helper function */
+	function d(x) {
+		return upside ? +x : -x;
+	}
+	function k(x, h) {
+		return draw_tick_circle(radius, 0.5 * Math.log(x) * I_LN10, d(h));
+	}
+	/* legend */
+	cursor_label.push(
+		function () {
+			cc.fillStyle = COLOUR_LABEL;
+			cc.font = tick_scale(1) + FONT;
+			cc.textBaseline = "middle";
+			cc.textAlign = "left";
+			return cc.fillText("x^2", canvas_centre + CANVAS_SCALE, canvas_centre - radius + d(tick_scale(1)));
+		}
+	);
+	/* circle */
+	cc.strokeStyle = COLOUR_LINE;
+	cc.fillStyle = COLOUR_FORWARD;
+	cc.beginPath();
+	cc.arc(canvas_centre, canvas_centre, radius, 0, PI2);
+	cc.stroke();
+	/* ticks and labels */
+	cc.textBaseline = "middle";
+	cc.textAlign = "left";
+	cc.beginPath();
+	function draw_partial(scale) {
+		function t(x, h) {
+			var y = scale * x;
+			k(y, h);
+			return y;
+		}
+		for (var x1 = 1; x1 <= 9; ++x1) {
+			var x = t(x1, tick_scale(0));
+			cc.font = tick_scale(0) + FONT;
+			cc.fillText(x.toString(), CANVAS_SCALE, d(tick_scale(0)) - radius);
+			for (var x2 = 0; x2 <= 9; ++x2) {
+				var xx = x1 + .1 * x2;
+				if (x2 > 0) {
+					t(xx, tick_scale(x2 === 5 ? 1 : 2));
+					if (x1 < 2) {
+						cc.font = tick_scale(2).toString() + FONT;
+						cc.fillText(x2.toString(), CANVAS_SCALE, d(tick_scale(2)) - radius);
+					}
+				}
+				if (x1 < 2 && x2 < 5)
+					for (var x3 = 1; x3 <= 9; ++x3)
+						t(xx + .01 * x3, tick_scale(x3 === 5 ? 3 : 4));
+				else if (x1 < 3)
+					for (var x3 = 1; x3 <= 4; ++x3)
+						t(xx + .02 * x3, tick_scale(4));
+				else if (x1 < 6)
+					t(xx + .05, tick_scale(4));
+			}
+		}
+	}
+	draw_partial(1);
+	draw_partial(10);
+	cc.stroke();
+	cc.setTransform(1, 0, 0, 1, 0, 0);
+}
+
+function draw_scale_cubic(upside) {
+	/* radii */
+	var outer_radius = stack_radius;
+	var inner_radius = outer_radius - 1.5 * tick_scale(0);
+	var radius = upside ? outer_radius : inner_radius;
+	stack_radius = inner_radius;
+	/* helper function */
+	function d(x) {
+		return upside ? +x : -x;
+	}
+	function k(x, h) {
+		return draw_tick_circle(radius, Math.log(x) * I_LN10 / 3, d(h));
+	}
+	/* legend */
+	cursor_label.push(
+		function () {
+			cc.fillStyle = COLOUR_LABEL;
+			cc.font = tick_scale(1) + FONT;
+			cc.textBaseline = "middle";
+			cc.textAlign = "left";
+			return cc.fillText("x^3", canvas_centre + CANVAS_SCALE, canvas_centre - radius + d(tick_scale(1)));
+		}
+	);
+	/* circle */
+	cc.strokeStyle = COLOUR_LINE;
+	cc.fillStyle = COLOUR_FORWARD;
+	cc.beginPath();
+	cc.arc(canvas_centre, canvas_centre, radius, 0, PI2);
+	cc.stroke();
+	/* ticks and labels */
+	cc.textBaseline = "middle";
+	cc.textAlign = "left";
+	cc.beginPath();
+	function draw_partial(scale, font_base) {
+		function t(x, h) {
+			var y = scale * x;
+			k(y, h);
+			return y;
+		}
+		for (var x1 = 1; x1 <= 9; ++x1) {
+			var x = t(x1, tick_scale(0));
+			cc.font = tick_scale(font_base) + FONT;
+			cc.fillText(x.toString(), CANVAS_SCALE, d(tick_scale(0)) - radius);
+			for (var x2 = 0; x2 <= 9; ++x2) {
+				var xx = x1 + .1 * x2;
+				if (x2 > 0) {
+					if (x1 < 7 || !(x2 & 1))
+						t(xx, tick_scale(x2 === 5 ? 1 : 2));
+					if (x1 < 2) {
+						cc.font = tick_scale(3).toString() + FONT;
+						cc.fillText(x2.toString(), CANVAS_SCALE, d(tick_scale(2)) - radius);
+					}
+				}
+				if (x1 < 2)
+					for (var x3 = 1; x3 <= 4; ++x3)
+						t(xx + .02 * x3, tick_scale(4));
+				else if (x1 < 4)
+					t(xx + .05, tick_scale(4));
+			}
+		}
+	}
+	draw_partial(1, 1);
+	draw_partial(10, 2);
+	draw_partial(100, 3);
+	cc.stroke();
+	cc.setTransform(1, 0, 0, 1, 0, 0);
 }
 
 function draw_scale_exp() {
@@ -411,19 +595,13 @@ function draw_scale_exp() {
 	return cc.setTransform(1, 0, 0, 1, 0, 0);
 }
 
-function draw_scale_log(upside) {
-	/* radii */
-	var outer_radius = stack_radius;
-	var inner_radius = outer_radius - 1.5 * tick_scale(0);
-	var radius = upside ? outer_radius : inner_radius;
-	stack_radius = inner_radius;
-	/* helper function */
-	function d(x) {
-		return upside ? +x : -x;
-	}
+function draw_scale_exp10() {
+	var line_height = 1.5 * tick_scale(0);
+	var radius = stack_radius;
 	function k(x, h) {
-		return draw_tick_circle(radius, x, d(h));
+		return draw_tick_spiral(radius, line_height, Math.log(Math.log(x) * I_LN10) * I_LN10, h);
 	}
+	stack_radius -= (SCALE_EXP_ROUNDS + 1) * line_height;
 	/* legend */
 	cursor_label.push(
 		function () {
@@ -431,44 +609,82 @@ function draw_scale_log(upside) {
 			cc.font = tick_scale(1) + FONT;
 			cc.textBaseline = "middle";
 			cc.textAlign = "left";
-			return cc.fillText("log(x)", canvas_centre + CANVAS_SCALE, canvas_centre - radius + d(tick_scale(1)));
+			var y = canvas_centre - radius + SCALE_EXP_ROUNDS * line_height + tick_scale(1);
+			return cc.fillText("exp10(x)", canvas_centre + CANVAS_SCALE, y);
 		}
 	);
-	/* circle */
-	cc.strokeStyle = COLOUR_LINE;
-	cc.fillStyle = COLOUR_FORWARD;
+	/* spiral */
 	cc.beginPath();
-	cc.arc(canvas_centre, canvas_centre, radius, 0, PI2);
+	draw_spiral(
+		radius, line_height,
+		0, - Math.log(Math.log(1 + 2 * Math.pow(.1, SCALE_EXP_ROUNDS)) * I_LN10) * I_LN10,
+		0.0078125
+	);
 	cc.stroke();
 	/* ticks and labels */
+	cc.strokeStyle = COLOUR_LINE;
+	cc.fillStyle = COLOUR_FORWARD;
 	cc.textBaseline = "middle";
 	cc.textAlign = "left";
+	cc.setTransform(1, 0, 0, 1, canvas_centre, canvas_centre);
 	cc.beginPath();
-	for (var x1 = 0; x1 <= 9; ++x1) {
-		var xx1 = .1 * x1;
-		k(xx1, tick_scale(0));
+	var y = k(10, tick_scale(0));
+	cc.font = tick_scale(0) + FONT;
+	cc.fillText("10", CANVAS_SCALE, y + tick_scale(0));
+	for (var x1 = 9; x1 >= 2; --x1) {
+		for (var x2 = 10; x2 >= 1; --x2) {
+			var y = k(x1 + .1 * x2, tick_scale(x2 === 5 ? 1 : 2));
+			if (x1 === 2 && x2 < 10) {
+				cc.font = tick_scale(2) + FONT;
+				cc.fillText(x2.toString(), CANVAS_SCALE, y + tick_scale(2));
+			}
+			if (x1 < 3 && x2 < 5)
+				for (var x3 = 1; x3 <= 9; ++x3)
+					k(x1 + .1 * (x2 - .1 * x3), tick_scale(x3 === 5 ? 3 : 4));
+			else if (x1 < 4)
+				for (var x3 = 1; x3 <= 4; ++x3)
+					k(x1 + .1 * (x2 - .2 * x3), tick_scale(4));
+			else if (x1 < 6)
+				k(x1 + .1 * (x2 - .5), tick_scale(4));
+		}
+		var y = k(x1, tick_scale(0));
 		cc.font = tick_scale(0) + FONT;
-		cc.fillText(x1.toString(), CANVAS_SCALE, d(tick_scale(0)) - radius);
-		for (var x2 = 0; x2 <= 9; ++x2) {
-			var xx1x2 = xx1 + .01 * x2;
-			if (x2 > 0)
-				k(xx1x2, tick_scale(x2 === 5 ? 1 : 2));
-			for (var x3 = 1; x3 <= 4; ++x3)
-				k(xx1x2 + 0.002 * x3, tick_scale(4));
+		cc.fillText(x1.toString(), CANVAS_SCALE, y + tick_scale(0));
+	}
+	for (var round = 1; round <= SCALE_EXP_ROUNDS; ++round) {
+		var scale = Math.pow(.1, round);
+		var prefix = "1." + "0".repeat(round - 1);
+		for (var x1 = 9; x1 >= (round === SCALE_EXP_ROUNDS ? 2 : 1); --x1) {
+			var xx1 = 1 + scale * x1;
+			for (var x2 = 10; x2 >= 1; --x2) {
+				var y = k(xx1 + scale * .1 * x2, tick_scale(x2 === 5 ? 1 : 2));
+				if (x1 === 1 && x2 < 10) {
+					cc.font = tick_scale(round + 1) + FONT;
+					cc.fillText(x2.toString(), CANVAS_SCALE, y + tick_scale(2));
+				}
+				if (x1 >= 4)
+					k(xx1 + scale * .1 * (x2 - .5), tick_scale(4));
+				else if (x1 >= 2)
+					for (var x3 = 1; x3 <= 4; ++x3)
+						k(xx1 + scale * .1 * (x2 - .2 * x3), tick_scale(4));
+				else
+					for (var x3 = 1; x3 <= 9; ++x3)
+						k(xx1 + scale * .1 * (x2 - .1 * x3), tick_scale(x3 === 5 ? 3 : 4));
+			}
+			var y = k(xx1, tick_scale(0));
+			cc.font = tick_scale(round) + FONT;
+			cc.fillText(prefix + x1.toString(), CANVAS_SCALE, y + tick_scale(0));
 		}
 	}
-	k(1 / Math.PI, tick_scale(0));
-	cc.font = tick_scale(1) + FONT;
-	cc.fillText("1/\u03c0", CANVAS_SCALE, d(tick_scale(1)) - radius);
 	cc.stroke();
-	cc.setTransform(1, 0, 0, 1, 0, 0);
+	return cc.setTransform(1, 0, 0, 1, 0, 0);
 }
 
 function draw_outer() {
-	cc.beginPath();
-	cc.strokeStyle = "#888";
-	cc.arc(canvas_centre, canvas_centre, canvas_centre, 0, PI2);
-	cc.stroke();
+	//	cc.beginPath();
+	//	cc.strokeStyle = "#888";
+	//	cc.arc(canvas_centre, canvas_centre, canvas_centre, 0, PI2);
+	//	cc.stroke();
 	for (var i = 0; i < outer_scales.length; ++i)
 		outer_scales[i](false);
 	outer_tag = document.createElement("img");
@@ -543,14 +759,21 @@ call(
 		var mapping = new Map(
 			[
 				[
-					"D/C,L,LLe",
+					"DI,D / C,B,K,L",
+					function () {
+						outer_scales = [draw_scale_invert, draw_scale_main];
+						inner_scales = [draw_scale_main, draw_scale_square, draw_scale_cubic, draw_scale_log];
+					}
+				],
+				[
+					"D / C,L,LL",
 					function () {
 						outer_scales = [draw_scale_main];
 						inner_scales = [draw_scale_main, draw_scale_log, draw_scale_exp];
 					}
 				],
 				[
-					"L/L,C,LLx",
+					"L / L,C,LLg",
 					function () {
 						outer_scales = [draw_scale_log];
 						inner_scales = [draw_scale_log, draw_scale_main, draw_scale_exp10];
@@ -558,7 +781,7 @@ call(
 				]
 			]
 		);
-		mapping.get("D/C,L,LLe")(); /* default */
+		call(mapping.get("DI,D / C,B,K,L")); /* default */
 		for (var i = 0; i < type_tags.length; ++i) {
 			var type_tag = type_tags[i];
 			var f = mapping.get(type_tag.value);
