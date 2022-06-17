@@ -67,7 +67,7 @@ var cursor_angle = 0;
 function tick_scale(n) {
 	var v = tick_scale.memoize.get(n);
 	if (typeof value === "undefined") {
-		var v = Math.round(TICK_SCALE_CONSTANT * main_dimension * Math.pow(.5, .5 * n));
+		var v = TICK_SCALE_CONSTANT * main_dimension * Math.pow(.5, .5 * n);
 		tick_scale.memoize.set(n, v);
 	}
 	return v;
@@ -81,10 +81,10 @@ var PI_180 = Math.PI / 180;
 var I_LN10 = 1 / Math.LN10;
 var PI2_LN10 = PI2 * I_LN10;
 
-function draw_tick_circle(r, x, h) {
+function draw_tick_circle(r, x, b, h) {
 	cc.setTransform(1, 0, 0, 1, canvas_centre, canvas_centre);
 	cc.rotate(PI2 * x);
-	cc.moveTo(0, - r);
+	cc.moveTo(0, - r + b);
 	return cc.lineTo(0, - r + h);
 }
 
@@ -123,7 +123,7 @@ function draw_scale_main(upside) {
 		return upside ? +x : -x;
 	}
 	function k(x, h) {
-		return draw_tick_circle(radius, Math.log(x) * I_LN10, d(h));
+		return draw_tick_circle(radius, Math.log(x) * I_LN10, 0, d(h));
 	}
 	/* legend */
 	cursor_label.push(
@@ -176,11 +176,6 @@ function draw_scale_main(upside) {
 				k(xx1 + .05, tick_scale(4));
 		}
 	}
-	k(Math.PI, tick_scale(0));
-	cc.font = tick_scale(1) + FONT;
-	cc.fillText("\u03C0", CANVAS_SCALE, d(tick_scale(1)) - radius);
-	k(Math.E, tick_scale(0));
-	cc.fillText("e", CANVAS_SCALE, d(tick_scale(1)) - radius);
 	cc.stroke();
 	cc.setTransform(1, 0, 0, 1, 0, 0);
 }
@@ -196,7 +191,7 @@ function draw_scale_invert(upside) {
 		return upside ? +x : -x;
 	}
 	function k(x, h) {
-		return draw_tick_circle(radius, - Math.log(x) * I_LN10, d(h));
+		return draw_tick_circle(radius, - Math.log(x) * I_LN10, 0, d(h));
 	}
 	/* legend */
 	cursor_label.push(
@@ -249,11 +244,6 @@ function draw_scale_invert(upside) {
 				k(xx1 + .05, tick_scale(4));
 		}
 	}
-	k(Math.PI, tick_scale(0));
-	cc.font = tick_scale(1) + FONT;
-	cc.fillText("\u03C0", CANVAS_SCALE, d(tick_scale(1)) - radius);
-	k(Math.E, tick_scale(0));
-	cc.fillText("e", CANVAS_SCALE, d(tick_scale(1)) - radius);
 	cc.stroke();
 	cc.setTransform(1, 0, 0, 1, 0, 0);
 }
@@ -269,7 +259,7 @@ function draw_scale_log(upside) {
 		return upside ? +x : -x;
 	}
 	function k(x, h) {
-		return draw_tick_circle(radius, x, d(h));
+		return draw_tick_circle(radius, x, 0, d(h));
 	}
 	/* legend */
 	cursor_label.push(
@@ -304,9 +294,6 @@ function draw_scale_log(upside) {
 				k(xx1x2 + 0.002 * x3, tick_scale(4));
 		}
 	}
-	k(1 / Math.PI, tick_scale(0));
-	cc.font = tick_scale(1) + FONT;
-	cc.fillText("1/\u03C0", CANVAS_SCALE, d(tick_scale(1)) - radius);
 	cc.stroke();
 	cc.setTransform(1, 0, 0, 1, 0, 0);
 }
@@ -322,7 +309,7 @@ function draw_scale_square(upside) {
 		return upside ? +x : -x;
 	}
 	function k(x, h) {
-		return draw_tick_circle(radius, 0.5 * Math.log(x) * I_LN10, d(h));
+		return draw_tick_circle(radius, 0.5 * Math.log(x) * I_LN10, 0, d(h));
 	}
 	function draw_partial(scale, font_base) {
 		function t(x, h) {
@@ -391,7 +378,7 @@ function draw_scale_cubic(upside) {
 		return upside ? +x : -x;
 	}
 	function k(x, h) {
-		return draw_tick_circle(radius, Math.log(x) * I_LN10 / 3, d(h));
+		return draw_tick_circle(radius, Math.log(x) * I_LN10 / 3, 0, d(h));
 	}
 	function draw_partial(scale, font_base) {
 		function t(x, h) {
@@ -912,12 +899,26 @@ function draw_scale_exp10() {
 }
 
 function draw_outer() {
+	/* Outer circle */
 	//	cc.beginPath();
 	//	cc.strokeStyle = "#888";
 	//	cc.arc(canvas_centre, canvas_centre, canvas_centre, 0, PI2);
 	//	cc.stroke();
+	/* Contants */
+	var line_height = 1.2 * tick_scale(0);
+	var line_top = canvas_centre - line_height;
+	cc.font = tick_scale(0) + FONT;
+	cc.textBaseline = "alphabetic";
+	cc.textAlign = "center";
+	cc.fillStyle = COLOUR_LABEL;
+	cc.fillText("e \u2248 2.7183", canvas_centre, line_top);
+	cc.fillText("ln(10) = 1/log(e) \u2248 2.3026", canvas_centre, line_top + line_height);
+	cc.fillText("\u03C0 \u2248 3.1416", canvas_centre, line_top + 2 * line_height);
+	cc.fillText("\u03C0/180 \u2248 0.017453", canvas_centre, line_top + 3 * line_height);
+	/* Scales */
 	for (var i = 0; i < outer_scales.length; ++i)
 		outer_scales[i](false);
+	/* Image tag */
 	outer_tag = document.createElement("img");
 	outer_tag.id = "outer";
 	outer_tag.src = canvas_tag.toDataURL();
