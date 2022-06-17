@@ -825,7 +825,7 @@ function draw_inner() {
 	inner_tag = document.createElement("img");
 	inner_tag.id = "inner";
 	inner_tag.src = canvas_tag.toDataURL();
-	inner_tag.style.rotate = inner_angle.toString() + "rad";
+	inner_tag.style.transform = "rotate(" + inner_angle.toString() + "rad)";
 	return main_tag.appendChild(inner_tag);
 }
 
