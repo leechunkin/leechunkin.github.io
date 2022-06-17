@@ -608,7 +608,7 @@ function draw_scale_exp() {
 			cc.font = tick_scale(1) + FONT;
 			cc.textBaseline = "middle";
 			cc.textAlign = "left";
-			var y = canvas_centre - radius + tick_scale(1);
+			var y = canvas_centre - radius + SCALE_EXP_ROUNDS * line_height + tick_scale(1);
 			return cc.fillText("exp(x)", canvas_centre + CANVAS_SCALE, y);
 		}
 	);
@@ -989,5 +989,19 @@ function pointerup(event) {
 main_tag.addEventListener("pointerdown", pointerdown);
 document.addEventListener("pointermove", pointermove);
 document.addEventListener("pointerup", pointerup);
+
+function prevent_default(event) {
+	event.preventDefault();
+	return false;
+}
+
+main_tag.addEventListener("mousedown", prevent_default);
+document.addEventListener("mousemove", prevent_default);
+document.addEventListener("mouseup", prevent_default);
+main_tag.addEventListener("touchstart", prevent_default);
+//	main_tag.addEventListener("touchmove", prevent_default);
+//	main_tag.addEventListener("touchend", prevent_default);
+//	main_tag.addEventListener("click", prevent_default);
+//	main_tag.addEventListener("contextmenu", prevent_default);
 
 });

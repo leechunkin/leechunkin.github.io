@@ -35,7 +35,7 @@ canvas {
 }
 
 details {
-	position: fixed;
+	position: absolute;
 	right: 2ex;
 	bottom: 2ex;
 	z-index: 9;
@@ -52,9 +52,32 @@ summary {
 	cursor: pointer;
 }
 
+menu {
+	margin: 1ex;
+	padding: 0;
+	list-style-type: none;
+	list-style-position: outside;
+}
+
+input {
+	vertical-align: middle;
+}
+
+input:checked + span {
+	border-radius: 0.5ex;
+	background-color: #FFF;
+}
+
 @media (prefers-color-scheme: dark) {
 	body {
 		background-color: #000;
 		color: #FFF;
+	}
+	details {
+		background: #444;
+		color: #FFF;
+	}
+	input:checked + span {
+		background-color: #000;
 	}
 }
