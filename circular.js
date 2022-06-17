@@ -884,9 +884,9 @@ call(
 		var mapping = new Map(
 			[
 				[
-					"DI,D / C,B,K,L,S",
+					"D / C,B,K,L,S",
 					function () {
-						outer_scales = [draw_scale_invert, draw_scale_main];
+						outer_scales = [draw_scale_main];
 						inner_scales = [draw_scale_main, draw_scale_square, draw_scale_cubic, draw_scale_log, draw_scale_asin];
 					}
 				],
@@ -901,22 +901,14 @@ call(
 					"D / C,L,E",
 					function () {
 						outer_scales = [draw_scale_main];
-						inner_scales = [
-							draw_scale_main,
-							draw_scale_log,
-							draw_scale_exp
-						];
+						inner_scales = [draw_scale_main, draw_scale_log, draw_scale_exp];
 					}
 				],
 				[
-					"L / L,C,LL",
+					"DI,L / L,C,LL",
 					function () {
-						outer_scales = [draw_scale_log];
-						inner_scales = [
-							draw_scale_log,
-							draw_scale_main,
-							draw_scale_exp10
-						];
+						outer_scales = [draw_scale_invert, draw_scale_log];
+						inner_scales = [draw_scale_log, draw_scale_main, draw_scale_exp10];
 					}
 				]
 			]
