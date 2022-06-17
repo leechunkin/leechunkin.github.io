@@ -851,7 +851,7 @@ function draw_cursor() {
 	cursor_tag = document.createElement("img");
 	cursor_tag.id = "cursor";
 	cursor_tag.src = canvas_tag.toDataURL();
-	cursor_tag.style.rotate = cursor_angle.toString() + "rad";
+	cursor_tag.style.transform = "rotate(" + cursor_angle.toString() + "rad)";
 	return main_tag.appendChild(cursor_tag);
 }
 
