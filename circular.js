@@ -480,7 +480,7 @@ function draw_scale_asin() {
 				var xx = x + .1 * d * x2;
 				if (x2 > 0) {
 					var y = k(xx, tick_scale(x2 === 5 ? 1 : 2));
-					if (x1 < 2) {
+					if (x1 < 2 && x2 <= 5) {
 						cc.font = tick_scale(round + 1) + FONT;
 						cc.textAlign = "right";
 						cc.fillStyle = COLOUR_BACKWARD;
@@ -884,17 +884,17 @@ call(
 		var mapping = new Map(
 			[
 				[
+					"DI,D / C,B,K,L,S",
+					function () {
+						outer_scales = [draw_scale_invert, draw_scale_main];
+						inner_scales = [draw_scale_main, draw_scale_square, draw_scale_cubic, draw_scale_log, draw_scale_asin];
+					}
+				],
+				[
 					"D / C,L,S",
 					function () {
 						outer_scales = [draw_scale_main];
 						inner_scales = [draw_scale_main, draw_scale_log, draw_scale_asin];
-					}
-				],
-				[
-					"DI,D / C,B,K,L,E",
-					function () {
-						outer_scales = [draw_scale_invert, draw_scale_main];
-						inner_scales = [draw_scale_main, draw_scale_square, draw_scale_cubic, draw_scale_log, draw_scale_exp];
 					}
 				],
 				[
