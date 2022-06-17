@@ -467,7 +467,7 @@ function draw_scale_asin() {
 			if (round <= 1)
 				var t = (90 - x).toString();
 			else
-				var t = "89." + "9".repeat(round - 2) + x1.toString();
+				var t = "89." + "9".repeat(round - 2) + (10 - x1).toString();
 			cc.fillText(t, - CANVAS_SCALE, y + tick_scale(0));
 			cc.textAlign = "left";
 			cc.fillStyle = COLOUR_FORWARD;
@@ -487,7 +487,7 @@ function draw_scale_asin() {
 						if (round <= 1)
 							var tt = (90 - xx).toString();
 						else
-							var tt = t + x2.toString();
+							var tt = t + (10 - x2).toString();
 						cc.fillText(tt, - CANVAS_SCALE, y + tick_scale(1));
 						cc.textAlign = "left";
 						cc.fillStyle = COLOUR_FORWARD;
