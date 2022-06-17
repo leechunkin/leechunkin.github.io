@@ -39,7 +39,13 @@ details {
 	right: 2ex;
 	bottom: 2ex;
 	z-index: 9;
-	font-size: min(4vw, 17vh);
+	border-style: double;
+	border-width: thick;
+	border-radius: 1ex;
+	padding: 1ex;
+	background: #CCC;
+	color: #000;
+	font-size: min(3vw, 8vh);
 }
 
 summary {
