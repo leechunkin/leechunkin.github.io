@@ -1,4 +1,4 @@
-void function(f){
+void function (f) {
 	if (document.readyState === "loading")
 		document.addEventListener("DOMContentLoaded", f);
 	else
@@ -1117,5 +1117,26 @@ main_tag.addEventListener("touchstart", prevent_default);
 //	main_tag.addEventListener("touchend", prevent_default);
 //	main_tag.addEventListener("click", prevent_default);
 //	main_tag.addEventListener("contextmenu", prevent_default);
+
+void function () {
+	window.addEventListener(
+		'beforeinstallprompt',
+		function beforeinstallprompt(event) {
+			var install_button = document.getElementById('install');
+			install_button.hidden = false;
+			var install_prompt = event;
+			install_button.addEventListener(
+				'click',
+				function click() {
+					install_button.hidden = true;
+					this.removeEventListener('click', click);
+					return install_prompt.prompt();
+				}
+			);
+			install_button.parentElement.hidden = false;
+		}
+	);
+	if ('serviceWorker' in navigator) navigator['serviceWorker'].register('service.js');
+}();
 
 });
