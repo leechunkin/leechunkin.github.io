@@ -1,7 +1,9 @@
-'use strict';
+"use strict";
+
+console.debug("service.js");
 
 self.addEventListener(
-	'fetch',
+	"fetch",
 	function (event) {
 		event.respondWith(
 			caches.match(event.request).then(
@@ -13,7 +15,7 @@ self.addEventListener(
 						return fetch(event.request).then(
 							function (response) {
 								if (response.ok)
-									return caches.open('circular').then(
+									return caches.open("circular").then(
 										function (cache) {
 											return cache.put(event.request, response).then(
 												function () {
@@ -34,20 +36,20 @@ self.addEventListener(
 );
 
 self.addEventListener(
-	'install',
+	"install",
 	function (event) {
 		return event.waitUntil(
-			caches.open('circular').then(
+			caches.open("circular").then(
 				function (cache) {
 					return cache.addAll(
 						[
-							'circular.xhtml',
-							'circular.css',
-							'circular.js',
-							'circular.128.png',
-							'circular.192.png',
-							'circular.256.png',
-							'service.js'
+							"circular.xhtml",
+							"circular.css",
+							"circular.js",
+							"circular.128.png",
+							"circular.192.png",
+							"circular.256.png",
+							"service.js"
 						]
 					);
 				}

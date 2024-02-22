@@ -6,7 +6,7 @@ void function (f) {
 }(function () {
 "use strict";
 
-var dark_mode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+var dark_mode = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)");
 dark_mode = dark_mode && dark_mode.matches;
 
 var FONT = "px serif";
@@ -1120,23 +1120,25 @@ main_tag.addEventListener("touchstart", prevent_default);
 
 void function () {
 	window.addEventListener(
-		'beforeinstallprompt',
+		"beforeinstallprompt",
 		function beforeinstallprompt(event) {
-			var install_button = document.getElementById('install');
+			console.debug("beforeinstallprompt");
+			var install_button = document.getElementById("install");
 			install_button.hidden = false;
 			var install_prompt = event;
 			install_button.addEventListener(
-				'click',
+				"click",
 				function click() {
 					install_button.hidden = true;
-					this.removeEventListener('click', click);
+					this.removeEventListener("click", click);
 					return install_prompt.prompt();
 				}
 			);
 			install_button.parentElement.hidden = false;
 		}
 	);
-	if ('serviceWorker' in navigator) navigator['serviceWorker'].register('service.js');
+	if ("serviceWorker" in navigator)
+			navigator["serviceWorker"].register("service.js");
 }();
 
 });
