@@ -17,7 +17,7 @@ var COLOUR_BACKWARD = dark_mode ? "#F88" : "#C00";
 var COLOUR_LABEL = dark_mode ? "#88F" : "#080";
 var COLOUR_CURSOR_BOARD =  dark_mode ? "#6664" : "#CCC4";
 var COLOUR_CURSOR_LINE =  dark_mode ? "#FFF8" : "#0008";
-var CANVAS_SCALE = .5 * (Math.sqrt(5) + 1);
+var CANVAS_SCALE = (1. + Math.sqrt(5)) * .5;
 var SCALE_EXP_ROUNDS = 3;
 var SCALE_SIN_ROUNDS = 2;
 var TICK_SCALE_CONSTANT = .0234375 * CANVAS_SCALE;
@@ -66,7 +66,7 @@ var cursor_angle = 0;
 
 function tick_scale(n) {
 	var v = tick_scale.memoize.get(n);
-	if (typeof value === "undefined") {
+	if (typeof v === "undefined") {
 		var v = TICK_SCALE_CONSTANT * main_dimension * Math.pow(.5, .5 * n);
 		tick_scale.memoize.set(n, v);
 	}
@@ -81,35 +81,38 @@ var PI_180 = Math.PI / 180;
 var I_LN10 = 1 / Math.LN10;
 var PI2_LN10 = PI2 * I_LN10;
 
-function draw_tick_circle(r, x, b, h) {
-	cc.setTransform(1, 0, 0, 1, canvas_centre, canvas_centre);
-	cc.rotate(PI2 * x);
-	cc.moveTo(0, - r + b);
-	return cc.lineTo(0, - r + h);
+function basic_transform() {
+	return cc.setTransform(1, 0, 0, 1, canvas_centre, canvas_centre);
 }
 
-function draw_spiral(r, dr, x0, x1, dx) {
-	cc.setTransform(1, 0, 0, 1, canvas_centre, canvas_centre);
-	cc.rotate(PI2 * x0);
+function draw_spiral(r, dr, a0, a1, da) {
+	cc.beginPath();
+	basic_transform();
+	cc.rotate(PI2 * a0);
 	cc.moveTo(0, - r);
-	var x = x0;
-	while ((x += dx) < x1) {
-		cc.setTransform(1, 0, 0, 1, canvas_centre, canvas_centre);
-		cc.rotate(- PI2 * x);
-		cc.lineTo(0, - r + x * dr);
+	var a = a0;
+	while ((a += da) < a1) {
+		basic_transform();
+		cc.rotate(- PI2 * a);
+		cc.lineTo(0, - r + a * dr);
 	}
-	cc.setTransform(1, 0, 0, 1, canvas_centre, canvas_centre);
-	cc.rotate(- PI2 * x1);
-	cc.lineTo(0, - r + x1 * dr);
+	basic_transform();
+	cc.rotate(- PI2 * a1);
+	cc.lineTo(0, - r + a1 * dr);
+	return cc.stroke();
 }
 
 function draw_tick_spiral(r, dr, x, h) {
-	cc.setTransform(1, 0, 0, 1, canvas_centre, canvas_centre);
+	basic_transform();
 	cc.rotate(PI2 * x);
 	var y = - r - x * dr;
 	cc.moveTo(0, y);
 	cc.lineTo(0, y + h);
 	return y;
+}
+
+function draw_tick_circle(r, x, h) {
+	return draw_tick_spiral(r, 0, x, h);
 }
 
 function draw_scale_main(upside) {
@@ -123,7 +126,7 @@ function draw_scale_main(upside) {
 		return upside ? +x : -x;
 	}
 	function k(x, h) {
-		return draw_tick_circle(radius, Math.log(x) * I_LN10, 0, d(h));
+		return draw_tick_circle(radius, Math.log(x) * I_LN10, d(h));
 	}
 	/* legend */
 	cursor_label.push(
@@ -191,7 +194,7 @@ function draw_scale_invert(upside) {
 		return upside ? +x : -x;
 	}
 	function k(x, h) {
-		return draw_tick_circle(radius, - Math.log(x) * I_LN10, 0, d(h));
+		return draw_tick_circle(radius, - Math.log(x) * I_LN10, d(h));
 	}
 	/* legend */
 	cursor_label.push(
@@ -259,7 +262,7 @@ function draw_scale_log(upside) {
 		return upside ? +x : -x;
 	}
 	function k(x, h) {
-		return draw_tick_circle(radius, x, 0, d(h));
+		return draw_tick_circle(radius, x, d(h));
 	}
 	/* legend */
 	cursor_label.push(
@@ -309,7 +312,7 @@ function draw_scale_square(upside) {
 		return upside ? +x : -x;
 	}
 	function k(x, h) {
-		return draw_tick_circle(radius, 0.5 * Math.log(x) * I_LN10, 0, d(h));
+		return draw_tick_circle(radius, 0.5 * Math.log(x) * I_LN10, d(h));
 	}
 	function draw_partial(scale, font_base) {
 		function t(x, h) {
@@ -378,7 +381,7 @@ function draw_scale_cubic(upside) {
 		return upside ? +x : -x;
 	}
 	function k(x, h) {
-		return draw_tick_circle(radius, Math.log(x) * I_LN10 / 3, 0, d(h));
+		return draw_tick_circle(radius, Math.log(x) * I_LN10 / 3, d(h));
 	}
 	function draw_partial(scale, font_base) {
 		function t(x, h) {
@@ -537,13 +540,11 @@ function draw_scale_asin() {
 		}
 	);
 	/* spiral */
-	cc.beginPath();
 	draw_spiral(
 		radius, line_height,
 		0, - Math.log(Math.sin(Math.pow(.1, SCALE_SIN_ROUNDS - 1) * 6 * PI_180)) * I_LN10,
 		0.0078125
 	);
-	cc.stroke();
 	/* ticks and labels */
 	cc.strokeStyle = COLOUR_LINE;
 	cc.textBaseline = "middle";
@@ -576,9 +577,7 @@ function draw_scale_pythagorean() {
 		}
 	);
 	/* spiral */
-	cc.beginPath();
 	draw_spiral(radius, line_height, 0, 1, 0.0078125);
-	cc.stroke();
 	/* ticks and labels */
 	cc.strokeStyle = COLOUR_LINE;
 	cc.fillStyle = COLOUR_BACKWARD;
@@ -706,14 +705,12 @@ function draw_scale_exp() {
 		}
 	);
 	/* spiral */
-	cc.beginPath();
 	draw_spiral(
 		radius, line_height,
 		Math.log(Math.log(20000)) * I_LN10 - 1,
 		1 - Math.log(Math.log(1 + Math.pow(.1, SCALE_EXP_ROUNDS - 1))) * I_LN10,
 		0.0078125
 	);
-	cc.stroke();
 	/* ticks and labels */
 	cc.strokeStyle = COLOUR_LINE;
 	cc.fillStyle = COLOUR_FORWARD;
@@ -832,13 +829,11 @@ function draw_scale_exp10() {
 		}
 	);
 	/* spiral */
-	cc.beginPath();
 	draw_spiral(
 		radius, line_height,
 		0, - Math.log(Math.log(1 + 2 * Math.pow(.1, SCALE_EXP_ROUNDS)) * I_LN10) * I_LN10,
 		0.0078125
 	);
-	cc.stroke();
 	/* ticks and labels */
 	cc.strokeStyle = COLOUR_LINE;
 	cc.fillStyle = COLOUR_FORWARD;
@@ -971,6 +966,7 @@ function draw() {
 	canvas_tag.height = canvas_dimension;
 	cursor_label = new Array;
 	stack_radius = canvas_centre;
+	tick_scale.memoize.clear();
 	cc.lineWidth = CANVAS_SCALE;
 	draw_outer();
 	slide_radius = stack_radius;
@@ -1137,7 +1133,7 @@ void function () {
 			install_button.parentElement.hidden = false;
 		}
 	);
-	if ("serviceWorker" in navigator)
+	if ("serviceWorker" in navigator && (location.protocol === "http" || location.protocol === "https"))
 			navigator["serviceWorker"].register("service.js");
 }();
 
