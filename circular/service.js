@@ -1,7 +1,5 @@
 "use strict";
 
-console.debug("service.js");
-
 self.addEventListener(
 	"fetch",
 	function (event) {

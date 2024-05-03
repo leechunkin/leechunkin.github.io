@@ -1114,27 +1114,26 @@ main_tag.addEventListener("touchstart", prevent_default);
 //	main_tag.addEventListener("click", prevent_default);
 //	main_tag.addEventListener("contextmenu", prevent_default);
 
-void function () {
-	window.addEventListener(
-		"beforeinstallprompt",
-		function beforeinstallprompt(event) {
-			console.debug("beforeinstallprompt");
-			var install_button = document.getElementById("install");
-			install_button.hidden = false;
-			var install_prompt = event;
-			install_button.addEventListener(
-				"click",
-				function click() {
-					install_button.hidden = true;
-					this.removeEventListener("click", click);
-					return install_prompt.prompt();
-				}
-			);
-			install_button.parentElement.hidden = false;
-		}
-	);
-	if ("serviceWorker" in navigator && (location.protocol === "http" || location.protocol === "https"))
-			navigator["serviceWorker"].register("service.js");
-}();
+window.addEventListener(
+	"beforeinstallprompt",
+	function beforeinstallprompt(event) {
+		console.debug("beforeinstallprompt");
+		var install_button = document.getElementById("install");
+		install_button.hidden = false;
+		var install_prompt = event;
+		install_button.addEventListener(
+			"click",
+			function click() {
+				install_button.hidden = true;
+				this.removeEventListener("click", click);
+				return install_prompt.prompt();
+			}
+		);
+		install_button.parentElement.hidden = false;
+	}
+);
+
+if ("serviceWorker" in navigator && (location.protocol === "http" || location.protocol === "https"))
+	navigator["serviceWorker"].register("service.js");
 
 });
