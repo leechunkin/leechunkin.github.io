@@ -201,7 +201,7 @@ function draw_scale_10(f, x0, x1, r0, r1, level, upside, prefix) {
 	}
 	var min_a = Math.min(r0, r1) * min_dfx * PI2;
 	if (Math.abs(min_a) >= TICK_LIMIT) {
-		var draw_text = Math.abs(min_a) > (prefix.length + 1) * tick_scale(level);
+		var draw_text = Math.abs(min_a) > 1.5 * (prefix.length + 1) * tick_scale(level);
 		for (i = 0; i <= 9; ++i) {
 			if (i > 0) {
 				draw_tick_circle(fx[i], r[i], i === 5 ? h0 : h1);
@@ -275,53 +275,24 @@ function draw_scale_invert(upside) {
 }
 
 function draw_scale_log(upside) {
-	/* radii */
-	var outer_radius = stack_radius;
-	var inner_radius = outer_radius - 1.5 * tick_scale(0);
-	var radius = upside ? outer_radius : inner_radius;
-	stack_radius = inner_radius;
-	/* helper function */
-	function d(x) {
-		return upside ? +x : -x;
-	}
-	function k(x, h) {
-		return draw_tick_circle(x, radius, d(h));
-	}
-	/* legend */
-	cursor_label.push(
-		function () {
-			cc.fillStyle = COLOUR_LABEL;
-			cc.font = tick_scale(1) + FONT;
-			cc.textBaseline = "middle";
-			cc.textAlign = "left";
-			return cc.fillText("log(x)", canvas_centre + CANVAS_SCALE, canvas_centre - radius + d(tick_scale(1)));
-		}
-	);
-	/* circle */
-	cc.strokeStyle = COLOUR_LINE;
-	cc.fillStyle = COLOUR_FORWARD;
+	var radius = stack_circle_radius(upside);
+	draw_legend("log(x)", radius, upside, false);
+	initial_text_forward(false);
+	draw_circle(radius, 0, 1);
 	cc.beginPath();
-	cc.arc(canvas_centre, canvas_centre, radius, 0, PI2);
-	cc.stroke();
-	/* ticks and labels */
-	cc.textBaseline = "middle";
-	cc.textAlign = "left";
-	cc.beginPath();
-	for (var x1 = 0; x1 <= 9; ++x1) {
-		var xx1 = .1 * x1;
-		k(xx1, tick_scale(0));
+	function f(x) {
+		return 0.1 * x;
+	}
+	var h = tick_scale(0);
+	if (!upside) h = - h;
+	for (var x = 0; x <= 9; ++x) {
+		draw_tick_circle(f(x), radius, h);
 		cc.font = tick_scale(0) + FONT;
-		cc.fillText(x1.toString(), CANVAS_SCALE, d(tick_scale(0)) - radius);
-		for (var x2 = 0; x2 <= 9; ++x2) {
-			var xx1x2 = xx1 + .01 * x2;
-			if (x2 > 0)
-				k(xx1x2, tick_scale(x2 === 5 ? 1 : 2));
-			for (var x3 = 1; x3 <= 4; ++x3)
-				k(xx1x2 + 0.002 * x3, tick_scale(4));
-		}
+		cc.fillText(x.toString(), 0, h - radius);
+		draw_scale_10(f, x, x + 1, radius, radius, 1, upside, "");
 	}
 	cc.stroke();
-	cc.setTransform(1, 0, 0, 1, 0, 0);
+	reset_transform();
 }
 
 function draw_scale_asin() {
