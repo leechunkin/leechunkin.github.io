@@ -16,7 +16,7 @@ var dark_mode = window.matchMedia && window.matchMedia("(prefers-color-scheme: d
 dark_mode = dark_mode && dark_mode.matches;
 
 var FONT = "px serif";
-var CURSOR_WIDTH = .25;
+var CURSOR_WIDTH = .5;
 var COLOUR_LINE = dark_mode ? "#FFF" : "#000";
 var COLOUR_FORWARD = dark_mode ? "#8F8" : "#00C";
 var COLOUR_BACKWARD = dark_mode ? "#F88" : "#C00";
@@ -212,7 +212,7 @@ function draw_scale_10(f, N, r0, r1, level, upside, prefix) {
 				}
 			}
 			function f1(d) {
-				return f(i + 0.1 * d);
+				return f(i + .1 * d);
 			}
 			draw_scale_10(
 				f1, 10, r[i], r[i + 1],
@@ -232,7 +232,7 @@ function draw_scale_main_10(upside, radius, scale, shift, level, postfix) {
 	if (!upside) h = - h;
 	for (var x = 1; x <= 9; ++x) {
 		function f(i) {
-			return log10(x + 0.1 * i) * scale + shift;
+			return log10(x + .1 * i) * scale + shift;
 		}
 		draw_tick_circle(f(0), radius, h);
 		cc.font = tick_scale(level) + FONT;
@@ -256,8 +256,8 @@ function draw_scale_square(upside) {
 	draw_legend("x\xB2", radius, upside, false);
 	initial_text_forward(false);
 	draw_arc(radius, 0, 1);
-	draw_scale_main_10(upside, radius, 0.5, 0, 0, "");
-	return draw_scale_main_10(upside, radius, 0.5, 0.5, 0, "0");
+	draw_scale_main_10(upside, radius, .5, 0, 0, "");
+	return draw_scale_main_10(upside, radius, .5, .5, 0, "0");
 }
 
 function draw_scale_cubic(upside) {
@@ -288,9 +288,9 @@ function draw_scale_log(upside) {
 	if (!upside) h = - h;
 	for (var x = 0; x <= 9; ++x) {
 		function f(i) {
-			return 0.1 * (x + 0.1 * i);
+			return .1 * (x + .1 * i);
 		}
-		draw_tick_circle(0.1 * x, radius, h);
+		draw_tick_circle(.1 * x, radius, h);
 		cc.font = tick_scale(0) + FONT;
 		cc.fillText(x.toString(), 0, h - radius);
 		draw_scale_10(f, 10, radius, radius, 1, upside, "");
@@ -301,20 +301,19 @@ function draw_scale_log(upside) {
 
 function draw_scale_tansind(upside) {
 	var radius = stack_circle_radius(upside);
-	draw_legend("atand,sind", radius, upside, false);
-	draw_legend("asind,tand", radius, upside, true);
+	draw_legend("y/atan(y),y/sin(y)", radius, upside, false);
+	draw_legend("y/asin(y),y/tan(y)", radius, upside, true);
 	cc.strokeStyle = COLOUR_LINE;
 	cc.textBaseline = "middle";
-	var level = 0;
-	var h = tick_scale(level);
+	var h = tick_scale(0);
 	if (!upside) h = - h;
-	draw_arc(radius, log10(60 / Math.sqrt(3)) - 0.25, log10(0.9) - 0.25);
-	draw_arc(radius, - log10(0.9) - 0.25, log10(1.8 * PI_180 / Math.atan(1.8)) - 0.25);
+	draw_arc(radius, log10(60 / Math.sqrt(3)) - .25, log10(.9) - .25);
+	draw_arc(radius, - log10(.9) - .25, log10(1.7 * PI_180 / Math.atan(1.7)) - .25);
 	cc.beginPath();
 	draw_tick_circle(log10(I180_PI), radius - h, h >> 1);
 	draw_tick_circle(log10(PI_180), radius - h, h >> 1);
 	cc.stroke();
-	function draw_scale_d(f, N, zero, reverse, p) {
+	function draw_scale_d(f, N, zero, reverse, p, name) {
 		if (!reverse) {
 			cc.fillStyle = COLOUR_FORWARD;
 			cc.textAlign = "left";
@@ -326,21 +325,24 @@ function draw_scale_tansind(upside) {
 		var g0 = log10(zero);
 		for (var x = 0; x < N; ++x) {
 			function g(d) {
-				return log10(f(x + 0.1 * d));
+				return log10(f(x + .1 * d));
 			}
 			var g10 = g(10);
 			draw_tick_circle(g0, radius, h);
 			var s = p(x);
 			if (s.length * h < PI2 * Math.abs(g10 - g0) * radius) {
-				cc.font = tick_scale(level) + FONT;
+				cc.font = tick_scale(0) + FONT;
 				cc.fillText(s, 0, h - radius);
 			}
-			draw_scale_10(g, 10, radius, radius, level + 1, upside, "");
+			draw_scale_10(g, 10, radius, radius, 1, upside, "");
 			g0 = g10;
 		}
 		draw_tick_circle(g10, radius, h);
-		cc.font = tick_scale(level) + FONT;
-		cc.fillText(p(N), 0, h - radius);
+		cc.font = tick_scale(0) + FONT;
+		if (!reverse)
+			cc.fillText(p(N) + " " + name, 0, h - radius);
+		else
+			cc.fillText(name + " " + p(N), 0, h - radius);
 		cc.stroke();
 	}
 	function p10(x) {
@@ -351,32 +353,60 @@ function draw_scale_tansind(upside) {
 		var a = 10 * x;
 		return a / Math.sin(PI_180 * a);
 	}
-	draw_scale_d(sind, 9, I180_PI, false, p10);
+	draw_scale_d(sind, 9, I180_PI, false, p10, "\u{1D54A}");
 	function tand(x) {
 		if (!x) return I180_PI;
 		var a = 10 * x;
 		return a / Math.tan(PI_180 * a);
 	}
-	draw_scale_d(tand, 6, I180_PI, true, p10);
+	draw_scale_d(tand, 6, I180_PI, true, p10, "\u{1D54B}");
 	function p_10(x) {
-		return (x * 0.1).toString();
+		if (x === 10) return "1";
+		return (x * .1).toFixed(1);
 	}
 	function arctand(x) {
 		if (!x) return PI_180;
-		var a = 0.1 * x;
+		var a = .1 * x;
 		return a * PI_180 / Math.atan(a);
 	}
-	draw_scale_d(arctand, 18, PI_180, false, p_10);
+	draw_scale_d(arctand, 17, PI_180, false, p_10, "I\u{1D54B}");
 	function arcsind(x) {
 		if (!x) return PI_180;
-		var a = 0.1 * x;
+		var a = .1 * x;
 		return a * PI_180 / Math.asin(a);
 	}
-	draw_scale_d(arcsind, 10, PI_180, true, p_10);
+	draw_scale_d(arcsind, 10, PI_180, true, p_10, "I\u{1D54A}");
 	reset_transform();
 }
 
-function draw_scale_asin() {
+function draw_scale_logd(upside) {
+	var logd0 = log10(Math.LN10) - .25;
+	var logd10 = log10(10 / log10(11)) - .25;
+	var radius = stack_circle_radius(upside);
+	draw_legend("y/log(y+1)", radius, upside, false);
+	initial_text_forward(false);
+	draw_arc(radius, logd0, logd10);
+	cc.beginPath();
+	var h = tick_scale(0);
+	if (!upside) h = - h;
+	for (var x = 0; x < 10; ++x) {
+		function f(i) {
+			if (!x && !i) return log10(Math.LN10);
+			var y = x + .1 * i;
+			return log10(y / log10(y + 1));
+		}
+		draw_tick_circle(f(0), radius, h);
+		cc.font = tick_scale(0) + FONT;
+		cc.fillText(x.toString(), 0, h - radius);
+		draw_scale_10(f, 10, radius, radius, 1, upside, "");
+	}
+	draw_tick_circle(log10(x / log10(x + 1)), radius, h);
+	cc.fillText(x.toString() + " \u{1D543}", 0, h - radius);
+	cc.stroke();
+	reset_transform();
+}
+
+function draw_scale_sin() {
 	var line_height = 1.5 * tick_scale(0);
 	var radius = stack_radius;
 	stack_radius -= (SCALE_SIN_ROUNDS + 1) * line_height;
@@ -926,7 +956,7 @@ call(
 		var mapping = new Map(
 			[
 				[
-					"D / C,B,K,L,STd,P",
+					"D / C,B,K,L,Ld,STd,P",
 					function () {
 						outer_scales = [draw_scale_main];
 						inner_scales = [
@@ -934,6 +964,7 @@ call(
 							draw_scale_square,
 							draw_scale_cubic,
 							draw_scale_log,
+							draw_scale_logd,
 							draw_scale_tansind,
 							draw_scale_pythagorean
 						];
@@ -943,7 +974,7 @@ call(
 					"D / C,L,STd,S",
 					function () {
 						outer_scales = [draw_scale_main];
-						inner_scales = [draw_scale_main, draw_scale_log, draw_scale_tansind, draw_scale_asin];
+						inner_scales = [draw_scale_main, draw_scale_log, draw_scale_tansind, draw_scale_sin];
 					}
 				],
 				[
@@ -969,7 +1000,7 @@ call(
 				]
 			]
 		);
-		call(mapping.get("D / C,B,K,L,STd,P")); /* default */
+		call(mapping.get("D / C,B,K,L,Ld,STd,P")); /* default */
 		for (var i = 0; i < type_tags.length; ++i) {
 			var type_tag = type_tags[i];
 			var f = mapping.get(type_tag.value);
