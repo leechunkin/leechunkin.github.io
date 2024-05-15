@@ -16,7 +16,7 @@ var dark_mode = window.matchMedia && window.matchMedia("(prefers-color-scheme: d
 dark_mode = dark_mode && dark_mode.matches;
 
 var FONT = "px serif";
-var CURSOR_WIDTH = .5;
+var CURSOR_WIDTH = .25;
 var COLOUR_LINE = dark_mode ? "#FFF" : "#000";
 var COLOUR_FORWARD = dark_mode ? "#8F8" : "#00C";
 var COLOUR_BACKWARD = dark_mode ? "#F88" : "#C00";
@@ -301,8 +301,10 @@ function draw_scale_log(upside) {
 
 function draw_scale_tansind(upside) {
 	var radius = stack_circle_radius(upside);
-	draw_legend("y/atan(y),y/sin(y)", radius, upside, false);
-	draw_legend("y/asin(y),y/tan(y)", radius, upside, true);
+	draw_legend("y/atan(y)", radius + 0.5 * tick_scale(1), upside, false);
+	draw_legend("y/sin(y)", radius - 0.5 * tick_scale(1), upside, false);
+	draw_legend("y/tan(y)", radius + 0.5 * tick_scale(1), upside, true);
+	draw_legend("y/asin(y)", radius - 0.5 * tick_scale(1), upside, true);
 	cc.strokeStyle = COLOUR_LINE;
 	cc.textBaseline = "middle";
 	var h = tick_scale(0);
