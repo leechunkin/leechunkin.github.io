@@ -81,59 +81,45 @@ void function () {
 				if (this.context != null && this.gain != null) return;
 				this.context = new AudioContext;
 				this.gain = this.context.createGain();
-				this.gain.gain.value = 0.5;
+				this.gain.gain.value = 0.25;
 				this.gain.connect(this.context.destination);
 			},
 			oscillator(frequency) {
 				var oscillator = this.context.createOscillator();
-				oscillator.type = "triangle";
+				oscillator.type = "sawtooth";
 				oscillator.frequency.value = frequency;
 				oscillator.connect(this.gain);
 				return oscillator;
 			}
 		};
+		var actions = new Map;
 		var action = {
-			map: new Map(),
-			new(oscillator) {
-				var action = Object.create(this);
-				action.oscillator = oscillator;
-				return action;
-			},
-			down(code) {
-				if (this.map.has(code)) return true;
-				var position = keycode.get(code);
-				if (position === undefined) return false;
-				var tone = key_tone(position);
-				var frequency = tone_frequency(tone);
-				var oscillator = audio.oscillator(frequency);
-				oscillator.start();
-				var action = this.new(oscillator);
-				this.map.set(code, action);
-				return true;
-			},
-			up(code) {
-				var action = this.map.get(code);
-				if (!action) return false;
-				this.map.delete(code);
-				if (action.oscillator != null) {
-					action.oscillator.stop();
-					action.oscillator.disconnect();
-				}
-				return true;
+			oscillator: null,
+			initialize(oscillator) {
+				this.oscillator = oscillator;
+				return this;
 			}
 		};
 		document.addEventListener(
 			"keydown",
 			function (event) {
 				audio.initialize();
-				if (event.repeat) return;
 				var code = event.code;
 				switch (code) {
 					case "Backslash":
 						keyboard_type = 3 - keyboard_type;
 						return;
 					default:
-						if (!action.down(event.code)) return;
+						var position = keycode.get(code);
+						if (position === undefined) return;
+						if (event.repeat) break;
+						if (actions.has(code)) break;
+						var tone = key_tone(position);
+						var frequency = tone_frequency(tone);
+						var oscillator = audio.oscillator(frequency);
+						oscillator.start();
+						var new_action = Object.create(action).initialize(oscillator);
+						actions.set(code, new_action);
 				}
 				event.preventDefault();
 			}
@@ -141,7 +127,26 @@ void function () {
 		document.addEventListener(
 			"keyup",
 			function (event) {
-				if (action.up(event.code)) event.preventDefault();
+				var code = event.code;
+				var action = actions.get(code);
+				if (!action) return;
+				actions.delete(code);
+				if (action.oscillator != null) {
+					action.oscillator.stop();
+					action.oscillator.disconnect();
+				}
+			}
+		);
+		document.addEventListener(
+			"blur",
+			function () {
+				actions.forEach(
+					function (action) {
+						action.oscillator.stop();
+						action.oscillator.disconnect();
+					}
+				);
+				return actions.clear();
 			}
 		);
 	}
