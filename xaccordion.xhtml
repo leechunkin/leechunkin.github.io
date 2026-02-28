@@ -1,0 +1,162 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<html xmlns='http://www.w3.org/1999/xhtml'>
+	<title>X-Accordion (chromatic button)</title>
+	<head>
+		<script type='text/javascript'>
+			<![CDATA[
+
+void function () {
+	if (document.readyState !== "loading") return this();
+	else return document.addEventListener("DOMContentLoaded", this);
+}.call(
+	function () {
+		"use strict";
+		document.body.removeChild(document.getElementsByTagName("noscript").item(0));
+		if (typeof AudioContext === "undefined")
+			return (
+				function (h1) {
+					h1.appendChild(document.createTextNode("Web Audio is required"));
+					document.body.appendChild(h1);
+				}(document.createElement("h1"))
+			);
+		var keyboard_type = 2; /* 2 for type C, 1 for type B */
+		function tone_frequency(note) {
+			return 440 * Math.pow(2, note / 12);
+		}
+		function key_tone(keycode) {
+			var tone = (keycode[0]-3)*keyboard_type + (keycode[1]-1)*3 - 12;
+			return tone;
+		}
+		var keycode = new Map([
+			["Digit1",       [1, 1]],
+			["Digit2",       [1, 2]],
+			["Digit3",       [1, 3]],
+			["Digit4",       [1, 4]],
+			["Digit5",       [1, 5]],
+			["Digit6",       [1, 6]],
+			["Digit7",       [1, 7]],
+			["Digit8",       [1, 8]],
+			["Digit9",       [1, 9]],
+			["Digit0",       [1, 10]],
+			["Minus",        [1, 11]],
+			["Equal",        [1, 12]],
+			["KeyQ",         [2, 1]],
+			["KeyW",         [2, 2]],
+			["KeyE",         [2, 3]],
+			["KeyR",         [2, 4]],
+			["KeyT",         [2, 5]],
+			["KeyY",         [2, 6]],
+			["KeyU",         [2, 7]],
+			["KeyI",         [2, 8]],
+			["KeyO",         [2, 9]],
+			["KeyP",         [2, 10]],
+			["BracketLeft",  [2, 11]],
+			["BracketRight", [2, 12]],
+			["KeyA",         [3, 1]],
+			["KeyS",         [3, 2]],
+			["KeyD",         [3, 3]],
+			["KeyF",         [3, 4]],
+			["KeyG",         [3, 5]],
+			["KeyH",         [3, 6]],
+			["KeyJ",         [3, 7]],
+			["KeyK",         [3, 8]],
+			["KeyL",         [3, 9]],
+			["Semicolon",    [3, 10]],
+			["Quote",        [3, 11]],
+			["KeyZ",         [4, 1]],
+			["KeyX",         [4, 2]],
+			["KeyC",         [4, 3]],
+			["KeyV",         [4, 4]],
+			["KeyB",         [4, 5]],
+			["KeyN",         [4, 6]],
+			["KeyM",         [4, 7]],
+			["Comma",        [4, 8]],
+			["Period",       [4, 9]],
+			["Slash",        [4, 10]]
+		]);
+		var audio = {
+			context: null,
+			gain: null,
+			initialize() {
+				if (this.context != null && this.gain != null) return;
+				this.context = new AudioContext;
+				this.gain = this.context.createGain();
+				this.gain.gain.value = 0.5;
+				this.gain.connect(this.context.destination);
+			},
+			oscillator(frequency) {
+				var oscillator = this.context.createOscillator();
+				oscillator.type = "triangle";
+				oscillator.frequency.value = frequency;
+				oscillator.connect(this.gain);
+				return oscillator;
+			}
+		};
+		var action = {
+			map: new Map(),
+			new(oscillator) {
+				var action = Object.create(this);
+				action.oscillator = oscillator;
+				return action;
+			},
+			down(code) {
+				if (this.map.has(code)) return true;
+				var position = keycode.get(code);
+				if (position === undefined) return false;
+				var tone = key_tone(position);
+				var frequency = tone_frequency(tone);
+				var oscillator = audio.oscillator(frequency);
+				oscillator.start();
+				var action = this.new(oscillator);
+				this.map.set(code, action);
+				return true;
+			},
+			up(code) {
+				var action = this.map.get(code);
+				if (!action) return false;
+				this.map.delete(code);
+				if (action.oscillator != null) {
+					action.oscillator.stop();
+					action.oscillator.disconnect();
+				}
+				return true;
+			}
+		};
+		document.addEventListener(
+			"keydown",
+			function (event) {
+				audio.initialize();
+				if (event.repeat) return;
+				var code = event.code;
+				switch (code) {
+					case "Backslash":
+						keyboard_type = 3 - keyboard_type;
+						return;
+					default:
+						if (!action.down(event.code)) return;
+				}
+				event.preventDefault();
+			}
+		);
+		document.addEventListener(
+			"keyup",
+			function (event) {
+				if (action.up(event.code)) event.preventDefault();
+			}
+		);
+	}
+);
+
+			]]>
+		</script>
+		<style type='text/css'>
+		</style>
+	</head>
+	<body>
+		<template>
+		</template>
+		<noscript>
+			<h1>Javascript is required</h1>
+		</noscript>
+	</body>
+</html>
