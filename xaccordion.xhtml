@@ -75,7 +75,6 @@ void function () {
 		}
 		var keyboard_type = 2; /* 2 for type C, 1 for type B */
 		var waveform = "sawtooth";
-		var gain = 0.5;
 		var audio = {
 			context: null,
 			gain: null,
@@ -83,7 +82,7 @@ void function () {
 				if (this.context != null && this.gain != null) return;
 				this.context = new AudioContext;
 				this.gain = this.context.createGain();
-				this.gain.gain.value = gain;
+				this.gain.gain.value = 0.5;
 				this.gain.connect(this.context.destination);
 			},
 			oscillator(frequency) {
@@ -92,6 +91,9 @@ void function () {
 				oscillator.frequency.value = frequency;
 				oscillator.connect(this.gain);
 				return oscillator;
+			},
+			modify_gain(f) {
+				this.gain.gain.value = f(this.gain.gain.value);
 			}
 		};
 		var actions = new Map;
@@ -103,20 +105,34 @@ void function () {
 			}
 		};
 		document.addEventListener(
+			"pointermove",
+			function (event) {
+				audio.modify_gain(
+					function () {
+						return 1 - event.clientY / window.innerHeight;
+					}
+				);
+			}
+		);
+		document.addEventListener(
 			"keydown",
 			function (event) {
 				audio.initialize();
 				var code = event.code;
 				switch (code) {
 					case "Backspace":
-						gain = gain + 0.05;
-						if (gain > 1) gain = 1;
-						audio.gain.gain.value = gain;
+						audio.modify_gain(
+							function (gain) {
+								return Math.min(1, gain + 0.05);
+							}
+						);
 						break;
 					case "Enter":
-						gain = gain - 0.05;
-						if (gain < 0) gain = 0;
-						audio.gain.gain.value = gain;
+						audio.modify_gain(
+							function (gain) {
+								return Math.max(0, gain - 0.05);
+							}
+						);
 						break;
 					case "F1":
 						waveform = "sine";
