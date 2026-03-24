@@ -192,13 +192,57 @@ void function () {
 			]]>
 		</script>
 		<style type='text/css'>
+			body {
+				writing-mode: vertical-rl;
+			}
+			noscript {
+				position: fixed;
+				z-index: 1;
+				transform: translate(0, 50vh) translate(-50%, -50%);
+				border-style: double;
+				border-width: thick;
+				border-color: black;
+				writing-mode: horizontal-tb;
+				padding: 2ex;
+				background: lightgray;
+				color: red;
+				text-align: center;
+			}
+			p::before {
+				content: "　　"
+			}
+			li {
+				margin: 0.5em;
+			}
+			code {
+				background-color: lightgray;
+				padding: 0.5ex;
+				color: black;
+				writing-mode: horizontal-tb;
+			}
 		</style>
 	</head>
 	<body>
-		<template>
-		</template>
 		<noscript>
-			<h1>Javascript is required</h1>
+			<h1>你的瀏覽器並沒有提供這網頁需要的 Javascript 和 Web Audio</h1>
 		</noscript>
+		<h1>摸擬按鈕式手風琴</h1>
+		<p>
+			這個程式用電腦鍵盤模擬按鈕式手風琴右手部分。
+			鍵盤上的字母鍵及大部分符號鍵都是用來發出聲音。
+			其他功能鍵如下：
+		</p>
+		<ul>
+			<li><code>F1</code>：更改音色為正弦波。</li>
+			<li><code>F2</code>：更改音色為三角波。</li>
+			<li><code>F3</code>：更改音色為鋸齒波。</li>
+			<li><code>F4</code>：更改音色為方波。</li>
+			<li>反斜線<code>\</code>：更改音色為方波。</li>
+			<li>退回鍵：增加音量。</li>
+			<li>回車鍵：減低音量。</li>
+		</ul>
+		<p>
+			滑鼠可以用來控制音量，移動到頁面上方音量增大，到頁面下方音量減小。
+		</p>
 	</body>
 </html>
